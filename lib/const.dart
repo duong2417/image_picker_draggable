@@ -1,0 +1,1 @@
+double maxHeightKeyboard = 255;

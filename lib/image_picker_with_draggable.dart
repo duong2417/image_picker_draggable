@@ -1,0 +1,109 @@
+import 'package:flutter/material.dart';
+
+import 'const.dart';
+
+class ImagePickerBottomsheet extends StatefulWidget {
+  final double height;
+  const ImagePickerBottomsheet({super.key, required this.height});
+
+  @override
+  State<ImagePickerBottomsheet> createState() => _ImagePickerBottomsheetState();
+}
+
+class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
+  late DraggableScrollableController _draggableController;
+  double? height;
+
+  @override
+  void initState() {
+    super.initState();
+    _draggableController = DraggableScrollableController();
+  }
+
+  @override
+  void dispose() {
+    _draggableController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final minChildSize = maxHeightKeyboard / screenHeight;
+    final initChildSize = widget.height / screenHeight;
+    return DraggableScrollableSheet(
+      controller: _draggableController,
+      initialChildSize: initChildSize,
+      minChildSize:
+          minChildSize > initChildSize
+              ? 0
+              : minChildSize, // Đảm bảo minChildSize <= initChildSize
+      maxChildSize: 1.0,
+      builder: (context, scrollController) {
+        return Material(
+          elevation: 8,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Handle bar để kéo - vùng có thể chạm để kéo sheet
+                GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onPanUpdate: (details) {
+                    print('onPanUpdate: ${details.delta.dy}');
+                    // Tính toán hướng kéo và điều chỉnh kích thước sheet
+                    const sensitivity =
+                        0.002; //  Độ nhạy của thao tác kéo. Giảm sensitivity để kéo mượt hơn. Giá trị nhỏ hơn khiến người dùng phải kéo xa hơn để đạt hiệu ứng tương tự
+                    final deltaY = details.delta.dy;
+                    final currentSize =
+                        _draggableController
+                            .size; //Lấy kích thước hiện tại của sheet (tỉ lệ so với chiều cao màn hình)
+                    final newSize = (currentSize - (deltaY * sensitivity))
+                        .clamp(0.45, 1.0);
+                    print('newSize: $newSize');
+                    // Sử dụng jumpTo thay vì animateTo để responsive hơn
+                    _draggableController.jumpTo(newSize);
+                  },
+
+                  child: Container(
+                    //thanh kéo
+                    height: 30,
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Center(
+                      child: Container(
+                        height: 4,
+                        width: 40,
+                        decoration: BoxDecoration(color: Colors.grey[600]),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    itemCount: 20, // Số lượng item trong danh sách
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text('Item ${index + 1}'),
+                        onTap: () {
+                          print('Tapped on Item ${index + 1}');
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
