@@ -1,6 +1,5 @@
-# image_picker_with_draggable
-
-A new Flutter project.
+# image_picker_draggable
+Image bottom sheet like Zalo - A Flutter project with draggable image picker functionality.
 
 ## Getting Started
 
