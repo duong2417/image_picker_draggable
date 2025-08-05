@@ -1,3 +1,11 @@
+
+
+https://github.com/user-attachments/assets/84589dad-4f65-4412-b0b1-6adf0855b866
+
+
+
+https://github.com/user-attachments/assets/6fae749f-f1ca-40f6-9084-dc955e647c08
+
 # image_picker_draggable
 Image bottom sheet like Zalo - A Flutter project with draggable image picker functionality.
 
