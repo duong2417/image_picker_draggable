@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker_with_draggable/attachment_picker/attachment_picker_controller.dart';
-import 'package:image_picker_with_draggable/attachment_picker/options/gallery_picker.dart';
-import 'package:image_picker_with_draggable/draggable_sheet.dart';
+import 'package:image_picker_with_draggable/handler/attachment_picker_controller.dart';
+import 'package:image_picker_with_draggable/options/gallery_picker.dart';
+import 'package:image_picker_with_draggable/common/draggable_sheet.dart';
 import 'package:image_picker_with_draggable/utils/extensions.dart';
 
 import 'models/attachment.dart';

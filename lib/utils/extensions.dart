@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:http_parser/http_parser.dart';
-import 'package:image_picker_with_draggable/attachment_picker/attachment_picker_controller.dart';
+import 'package:image_picker_with_draggable/handler/attachment_picker_controller.dart';
 import 'package:image_picker_with_draggable/const.dart';
 import 'package:image_picker_with_draggable/models/attachment.dart';
 import 'package:image_picker_with_draggable/models/attachment_file.dart';

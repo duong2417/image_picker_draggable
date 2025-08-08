@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker_with_draggable/image_picker_with_draggable.dart';
-import 'package:photo_manager/photo_manager.dart';
-
+import 'package:image_picker_with_draggable/image_picker_bottom_sheet.dart';
 import 'const.dart';
 import 'utils/helper.dart';
 
@@ -23,34 +20,14 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   // Photo loading variables
   final ValueNotifier<List<Uint8List>> thumbnailsNotifier = ValueNotifier([]);
   final ValueNotifier<List<File>> filesNotifier = ValueNotifier([]);
-  final List<AssetEntity> _assetEntities = [];
-
-  static const int _thumbnailSize = 200;
-  static const int _limit = 40;
-
-  bool _isLoading = false;
-  bool _hasMore = true;
-  AssetPathEntity? _album;
-
   // Additional variables needed for the new implementation
   final FocusNode _focusNode = FocusNode();
 
-  void _setSx(double value) {
-    // Handle sx value
-  }
-
-  void _setSy(double value) {
-    // Handle sy value
-  }
   @override
   void initState() {
     super.initState();
     showActionUtilTapOutside = ValueNotifier<bool>(false);
     WidgetsBinding.instance.addObserver(this);
-    // Load initial photos
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      load(isInitial: true);
-    });
   }
 
   double _lastKeyboardHeight = 0;
@@ -73,89 +50,6 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
         }
       });
       _lastKeyboardHeight = currentHeight;
-    }
-  }
-
-  Future<void> load({bool isInitial = false}) async {
-    if (_isLoading || (!_hasMore && !isInitial)) return;
-    _isLoading = true;
-
-    if (_album == null || isInitial) {
-      final permission = await PhotoManager.requestPermissionExtend();
-      if (!permission.isAuth) {
-        await PhotoManager.openSetting();
-        _isLoading = false;
-        return;
-      }
-
-      final albums = await PhotoManager.getAssetPathList(
-        type: RequestType.image,
-        onlyAll: true,
-      );
-
-      if (albums.isEmpty) {
-        _isLoading = false;
-        return;
-      }
-
-      _album = albums.first;
-
-      if (isInitial) {
-        _assetEntities.clear();
-        thumbnailsNotifier.value = [];
-        filesNotifier.value = [];
-        _hasMore = true;
-      }
-    }
-
-    final startIndex = _assetEntities.length;
-
-    final nextAssets = await _album!.getAssetListRange(
-      start: startIndex,
-      end: startIndex + _limit,
-    );
-
-    if (nextAssets.isEmpty) {
-      _hasMore = false;
-      _isLoading = false;
-      return;
-    }
-
-    _assetEntities.addAll(nextAssets);
-
-    // Lấy thumbnail
-    final newThumbs = await Future.wait(
-      nextAssets.map(
-        (asset) => asset.thumbnailDataWithSize(
-          const ThumbnailSize(_thumbnailSize, _thumbnailSize),
-        ),
-      ),
-    );
-
-    // Lấy file thật
-    final newFiles = await Future.wait(
-      nextAssets.map((asset) async => await asset.file),
-    );
-
-    thumbnailsNotifier.value = [
-      ...thumbnailsNotifier.value,
-      ...newThumbs.whereType<Uint8List>(),
-    ];
-
-    filesNotifier.value = [
-      ...filesNotifier.value,
-      ...newFiles.whereType<File>(),
-    ];
-
-    _isLoading = false;
-  }
-
-  AssetEntity getAssetAt(int index) => _assetEntities[index];
-
-  void _sendImageAndMessage(List<File> files) {
-    // Implement your image sending logic here
-    for (File file in files) {
-      print('Sending image: ${file.path}');
     }
   }
 
@@ -223,7 +117,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                       return Container(
                         height:
                             maxHeightKeyboard -
-                            heightKeyboard, // keyboardController.heightKeyboard,
+                            heightKeyboard, //TODO ko an toàn: check số âm
                         color: Colors.amber,
                         child: Center(child: Text('This is a bottom bar')),
                       );
@@ -240,61 +134,15 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                   }
                   return ImagePickerBottomsheet(
                     key: ValueKey(heightKeyboard), //cp
-                    height: maxHeightKeyboard - heightKeyboard,
+                    height:
+                        maxHeightKeyboard -
+                        heightKeyboard, //TODO ko an toàn: check số âm
                     hideBottomSheet: () {
                       showActionUtilTapOutside.value = false;
                       _focusNode.requestFocus();
                       debugPrint('Bẹp tiếp nè');
                     },
                   );
-                  //   return Positioned(
-                  //     bottom: 0,
-                  //     left: 0,
-                  //     right: 0,
-                  //     child: ValueListenableBuilder<List<Uint8List>>(
-                  //       valueListenable: thumbnailsNotifier,
-                  //       builder: (context, thumbnails, _) {
-                  //         if (thumbnails.isEmpty) {
-                  //           return const SizedBox.shrink();
-                  //         }
-
-                  //         return ValueListenableBuilder<List<File>>(
-                  //           valueListenable: filesNotifier,
-                  //           builder: (context, files, _) {
-                  //             return ImagePickerBottomsheet(
-                  //                 key: ValueKey(heightKeyboard),
-                  //                 height:
-                  //                     maxHeightKeyboard - heightKeyboard,
-                  //                 thumbnails: thumbnails,
-                  //                 files:
-                  //                     files,
-                  //                 onLoadMore: () {
-                  //                   load(isInitial: false);
-                  //                 },
-                  //                 sx: _setSx,
-                  //                 sy: _setSy,
-                  // hideBottomSheet: () {
-                  //   showActionUtilTapOutside.value = false;
-                  //   _focusNode.requestFocus();
-                  //   debugPrint('Bẹp tiếp nè');
-                  // },
-                  //                 callbackFile: (e) {
-                  //                   _sendImageAndMessage(e);
-                  //                   if (showActionUtilTapOutside.value ==
-                  //                       true) {
-                  //                     Future.delayed(
-                  //                        const Duration(microseconds: 500), () {
-                  //                       showActionUtilTapOutside.value =
-                  //                           false;
-                  //                       _focusNode.requestFocus();
-                  //                     });
-                  //                   }
-                  //                 });
-                  //           },
-                  //         );
-                  //       },
-                  //     ),
-                  //   );
                 },
               ),
             ],

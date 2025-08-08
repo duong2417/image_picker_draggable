@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:image_picker_with_draggable/attachment_picker/thumbnail/photo_gallery_tile.dart';
+import 'package:image_picker_with_draggable/thumbnail/photo_gallery_tile.dart';
 import 'package:image_picker_with_draggable/common/empty_widget.dart';
 import 'package:image_picker_with_draggable/common/loading_widget.dart';
 import 'package:image_picker_with_draggable/common/paged_value_scrollview.dart';
@@ -9,7 +9,7 @@ import 'package:image_picker_with_draggable/models/error_model.dart';
 import 'package:image_picker_with_draggable/utils/helper.dart';
 import 'package:photo_manager/photo_manager.dart';
 
-import 'photo_gallery_controller.dart';
+import '../handler/photo_gallery_controller.dart';
 
 class GalleryPicker extends StatefulWidget {
   const GalleryPicker({
@@ -84,6 +84,7 @@ class _GalleryPickerState extends State<GalleryPicker> {
 
   @override
   Widget build(BuildContext context) {
+    // return Container(color: Colors.yellow);//ok
     return FutureBuilder(
       future: requestPermission,
       builder: (context, snapshot) {
@@ -126,6 +127,9 @@ class _GalleryPickerState extends State<GalleryPicker> {
                 return false;
               },
               child: PagedValueGridView<int, AssetEntity>(
+                padding: const EdgeInsets.all(
+                  0,
+                ), //để sheet ko bị cách mép trên 1 đoạn
                 scrollController: _scrollController,
                 controller: _controller,
                 itemBuilder: (context, mediaList, index) {
@@ -138,12 +142,6 @@ class _GalleryPickerState extends State<GalleryPicker> {
                       widget.onTap(media);
                       debugPrint('Tapped on media: ${media.id}');
                     },
-                    // onLongPress:
-                    //     onLongPress == null ? null : () => onLongPress(media),
-                    // thumbnailSize: thumbnailSize,
-                    // thumbnailFormat: thumbnailFormat,
-                    // thumbnailQuality: thumbnailQuality,
-                    // thumbnailScale: thumbnailScale,
                   );
                 },
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
