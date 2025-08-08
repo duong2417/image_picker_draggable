@@ -1,12 +1,13 @@
-import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 
+import 'media_thumbnail_provider.dart';
+
 /// Widget that displays a photo or video item from the gallery.
-class StreamPhotoGalleryTile extends StatelessWidget {
-  /// Creates a new instance of [StreamPhotoGalleryTile].
-  const StreamPhotoGalleryTile({
+class PhotoGalleryTile extends StatelessWidget {
+  /// Creates a new instance of [PhotoGalleryTile].
+  const PhotoGalleryTile({
     super.key,
     required this.media,
     this.selected = false,
@@ -47,7 +48,7 @@ class StreamPhotoGalleryTile extends StatelessWidget {
 
   /// Creates a copy of this tile but with the given fields replaced with
   /// the new values.
-  StreamPhotoGalleryTile copyWith({
+  PhotoGalleryTile copyWith({
     Key? key,
     AssetEntity? media,
     bool? selected,
@@ -57,7 +58,7 @@ class StreamPhotoGalleryTile extends StatelessWidget {
     ThumbnailFormat? thumbnailFormat,
     int? thumbnailQuality,
     double? thumbnailScale,
-  }) => StreamPhotoGalleryTile(
+  }) => PhotoGalleryTile(
     key: key ?? this.key,
     media: media ?? this.media,
     selected: selected ?? this.selected,
@@ -75,7 +76,6 @@ class StreamPhotoGalleryTile extends StatelessWidget {
       children: [
         AspectRatio(
           aspectRatio: 1,
-          // child: Text('placeHolder'),
           child: FadeInImage(
             placeholder: const AssetImage('assets/placeholder.png'),
             fadeInDuration: const Duration(milliseconds: 300),
@@ -95,7 +95,6 @@ class StreamPhotoGalleryTile extends StatelessWidget {
               duration: const Duration(milliseconds: 300),
               opacity: selected ? 1.0 : 0.0,
               child: Container(
-                color: Colors.pink,
                 alignment: Alignment.topRight,
                 padding: const EdgeInsets.only(top: 8, right: 8),
                 child: CircleAvatar(
@@ -143,99 +142,4 @@ extension on Duration {
 
     return s;
   }
-}
-
-/// {@template mediaThumbnailProvider}
-/// Builds a thumbnail using [ImageProvider].
-/// {@endtemplate}
-class MediaThumbnailProvider extends ImageProvider<MediaThumbnailProvider> {
-  /// {@macro mediaThumbnailProvider}
-  const MediaThumbnailProvider({
-    required this.media,
-    // TODO: Are these sizes optimal? Consider web/desktop
-    this.size = const ThumbnailSize(400, 400),
-    this.format = ThumbnailFormat.jpeg,
-    this.quality = 100,
-    this.scale = 1,
-  });
-
-  /// Media to load
-  final AssetEntity media;
-
-  /// The thumbnail size.
-  final ThumbnailSize size;
-
-  /// {@macro photo_manager.ThumbnailFormat}
-  final ThumbnailFormat format;
-
-  /// The quality value for the thumbnail.
-  ///
-  /// Valid from 1 to 100.
-  /// Defaults to 100.
-  final int quality;
-
-  /// Scale of the image.
-  final double scale;
-
-  @override
-  Future<MediaThumbnailProvider> obtainKey(ImageConfiguration configuration) {
-    return SynchronousFuture<MediaThumbnailProvider>(this);
-  }
-
-  @override
-  ImageStreamCompleter loadImage(
-    MediaThumbnailProvider key,
-    ImageDecoderCallback decode,
-  ) {
-    return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key, decode),
-      scale: key.scale,
-      informationCollector: () sync* {
-        yield DiagnosticsProperty<ImageProvider>(
-          'Thumbnail provider: $this \n Thumbnail key: $key',
-          this,
-          style: DiagnosticsTreeStyle.errorProperty,
-        );
-      },
-    );
-  }
-
-  Future<ui.Codec> _loadAsync(
-    MediaThumbnailProvider key,
-    ImageDecoderCallback decode,
-  ) async {
-    assert(key == this, '$key is not $this');
-    final bytes = await media.thumbnailDataWithSize(
-      size,
-      format: format,
-      quality: quality,
-    );
-    final buffer = await ui.ImmutableBuffer.fromUint8List(bytes!);
-    return decode(buffer);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (other is MediaThumbnailProvider) {
-      return media == other.media &&
-          size == other.size &&
-          format == other.format &&
-          quality == other.quality &&
-          scale == other.scale;
-    }
-    return false;
-  }
-
-  @override
-  int get hashCode => Object.hash(media, size, format, quality, scale);
-
-  @override
-  String toString() =>
-      '$runtimeType('
-      'media: $media, '
-      'size: $size, '
-      'format: $format, '
-      'quality: $quality, '
-      'scale: $scale'
-      ')';
 }

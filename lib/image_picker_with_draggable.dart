@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/attachment_picker/attachment_picker_controller.dart';
 import 'package:image_picker_with_draggable/attachment_picker/options/gallery_picker.dart';
 import 'package:image_picker_with_draggable/draggable_sheet.dart';
+import 'package:image_picker_with_draggable/utils/extensions.dart';
 
 import 'models/attachment.dart';
 import 'models/attachment_picker.dart';
@@ -53,16 +54,27 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
       maxHeight: maxHeight,
       hideBottomSheet: () {
         widget.hideBottomSheet();
-        // _draggableController.animateTo(
-        //   0,
-        //   duration: const Duration(milliseconds: 300),
-        //   curve: Curves.easeInOut,
-        // );
       },
       child: ValueListenableBuilder<AttachmentPickerValue>(
         valueListenable: _controller,
         builder: (context, atms, _) {
+          final attachment = _controller.value.attachments;
+          final selectedIds = attachment.map((it) => it.id);
           return GalleryPicker(
+            selectedMediaItems: selectedIds,
+            onTap: (media) async {
+              debugPrint('Tapped on media: ${media.id}');
+              try {
+                if (selectedIds.contains(media.id)) {
+                  return await _controller.removeAssetAttachment(media);
+                }
+                return await _controller.addAssetAttachment(media);
+              } catch (e, stk) {
+                // if (onError != null) return onError.call(e, stk);
+                debugPrint('Error adding/removing attachment: $e');
+                rethrow;
+              }
+            },
             scrollController: scrollController,
             onScrollDownAtTop: () {
               final currentHeight = height ?? minHeight;

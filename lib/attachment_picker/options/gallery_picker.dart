@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:image_picker_with_draggable/attachment_picker/photo_gallery/stream_photo_gallery_tile.dart';
+import 'package:image_picker_with_draggable/attachment_picker/thumbnail/photo_gallery_tile.dart';
 import 'package:image_picker_with_draggable/common/empty_widget.dart';
 import 'package:image_picker_with_draggable/common/loading_widget.dart';
 import 'package:image_picker_with_draggable/common/paged_value_scrollview.dart';
@@ -17,6 +17,8 @@ class GalleryPicker extends StatefulWidget {
     this.limit = 50,
     this.scrollController,
     this.onScrollDownAtTop,
+    required this.onTap,
+    required this.selectedMediaItems,
   });
 
   /// Maximum number of media items that can be selected.
@@ -25,6 +27,10 @@ class GalleryPicker extends StatefulWidget {
   final ScrollController? scrollController;
 
   final VoidCallback? onScrollDownAtTop;
+
+  final Function(AssetEntity media) onTap;
+
+  final Iterable<String> selectedMediaItems;
 
   @override
   State<GalleryPicker> createState() => _GalleryPickerState();
@@ -124,11 +130,14 @@ class _GalleryPickerState extends State<GalleryPicker> {
                 controller: _controller,
                 itemBuilder: (context, mediaList, index) {
                   final media = mediaList[index];
-                  // final onTap = onMediaTap;
-                  // final onLongPress = onMediaLongPress;
-                  return StreamPhotoGalleryTile(
+
+                  return PhotoGalleryTile(
+                    selected: widget.selectedMediaItems.contains(media.id),
                     media: media,
-                    // onTap: onTap == null ? null : () => onTap(media),
+                    onTap: () {
+                      widget.onTap(media);
+                      debugPrint('Tapped on media: ${media.id}');
+                    },
                     // onLongPress:
                     //     onLongPress == null ? null : () => onLongPress(media),
                     // thumbnailSize: thumbnailSize,

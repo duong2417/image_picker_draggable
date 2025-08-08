@@ -1,0 +1,16 @@
+           onMediaItemSelected: (media) async {
+                try {
+                  if (selectedIds.contains(media.id)) {
+                    return await controller.removeAssetAttachment(media);
+                  }
+                  return await controller.addAssetAttachment(media);
+                } catch (e, stk) {
+                  if (onError != null) return onError.call(e, stk);
+                  rethrow;
+                }
+              },
+
+               supportedTypes: [
+            AttachmentPickerType.images,
+            AttachmentPickerType.videos,
+          ],
