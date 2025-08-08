@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'const.dart';
-import 'helper.dart';
+import 'utils/helper.dart';
 import 'image_picker_with_draggable.dart';
 
 class HomeView extends StatefulWidget {
