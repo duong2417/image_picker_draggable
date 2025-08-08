@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker_with_draggable/attachment_picker/options/stream_attachment_picker.dart';
+import 'package:flutter/rendering.dart';
 import 'package:image_picker_with_draggable/attachment_picker/photo_gallery/stream_photo_gallery_tile.dart';
 import 'package:image_picker_with_draggable/common/empty_widget.dart';
+import 'package:image_picker_with_draggable/common/loading_widget.dart';
 import 'package:image_picker_with_draggable/common/paged_value_scrollview.dart';
 import 'package:image_picker_with_draggable/const.dart';
 import 'package:image_picker_with_draggable/models/error_model.dart';
@@ -14,13 +15,16 @@ class GalleryPicker extends StatefulWidget {
   const GalleryPicker({
     super.key,
     this.limit = 50,
-    required this.scrollController,
+    this.scrollController,
+    this.onScrollDownAtTop,
   });
 
   /// Maximum number of media items that can be selected.
   final int limit;
 
-  final ScrollController scrollController;
+  final ScrollController? scrollController;
+
+  final VoidCallback? onScrollDownAtTop;
 
   @override
   State<GalleryPicker> createState() => _GalleryPickerState();
@@ -29,14 +33,16 @@ class GalleryPicker extends StatefulWidget {
 class _GalleryPickerState extends State<GalleryPicker> {
   Future<PermissionState>? requestPermission;
   late PhotoGalleryController _controller;
-
+  late ScrollController _scrollController;
   @override
   void initState() {
     super.initState();
-    _controller = PhotoGalleryController();
     requestPermission = runInPermissionRequestLock(
       PhotoManager.requestPermissionExtend,
     );
+    _controller = PhotoGalleryController();
+    _scrollController = widget.scrollController ?? ScrollController();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
@@ -48,9 +54,25 @@ class _GalleryPickerState extends State<GalleryPicker> {
     }
   }
 
+  void _onScroll() {
+    if (_scrollController.position.pixels <= 0 &&
+        _scrollController.position.userScrollDirection ==
+            ScrollDirection.forward) {
+      widget.onScrollDownAtTop?.call();
+    }
+    // if (_scrollController.position.pixels >=
+    //     _scrollController.position.maxScrollExtent - 500) {
+    //   widget.onLoadMore();
+    // }
+  }
+
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.removeListener(_onScroll);
+    if (widget.scrollController == null) {
+      _scrollController.dispose();
+    }
     super.dispose();
   }
 
@@ -67,47 +89,44 @@ class _GalleryPickerState extends State<GalleryPicker> {
 
         final isPermissionGranted = isAuthorized || isLimited;
 
-        return OptionDrawer(
-          actions: [
-            if (isLimited)
-              IconButton(
-                color: Colors.green,
-                icon: const Icon(Icons.add_circle_outline_rounded),
-                onPressed: () async {
-                  await PhotoManager.presentLimited();
-                  _controller.doInitialLoad();
-                },
-              ),
-          ],
-          child: Builder(
-            builder: (context) {
-              if (!isPermissionGranted) {
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.image, size: 240, color: disabledColor),
-
-                    Text(
-                      'Enable photo and video access message',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: PhotoManager.openSetting,
-                      child: Text('Allow gallery access message'),
-                    ),
-                  ],
-                );
-              }
-              return PagedValueGridView<int, AssetEntity>(
-                scrollController: widget.scrollController,
+        return Builder(
+          builder: (context) {
+            if (!isPermissionGranted) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.image, size: 240, color: disabledColor),
+                  Text(
+                    'Enable photo and video access message',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: PhotoManager.openSetting,
+                    child: Text('Allow gallery access message'),
+                  ),
+                ],
+              );
+            }
+            return NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (notification is OverscrollNotification &&
+                    notification.overscroll <= 0 &&
+                    _scrollController.offset < 0) {
+                  debugPrint('bẹp bẹp bẹp');
+                  widget.onScrollDownAtTop?.call();
+                  return true;
+                }
+                return false;
+              },
+              child: PagedValueGridView<int, AssetEntity>(
+                scrollController: _scrollController,
                 controller: _controller,
                 itemBuilder: (context, mediaList, index) {
                   final media = mediaList[index];
                   // final onTap = onMediaTap;
                   // final onLongPress = onMediaLongPress;
-
-                  final streamPhotoGalleryTile = StreamPhotoGalleryTile(
+                  return StreamPhotoGalleryTile(
                     media: media,
                     // onTap: onTap == null ? null : () => onTap(media),
                     // onLongPress:
@@ -117,7 +136,6 @@ class _GalleryPickerState extends State<GalleryPicker> {
                     // thumbnailQuality: thumbnailQuality,
                     // thumbnailScale: thumbnailScale,
                   );
-                  return streamPhotoGalleryTile;
                 },
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
@@ -133,20 +151,20 @@ class _GalleryPickerState extends State<GalleryPicker> {
                   );
                 },
                 loadMoreErrorBuilder: (BuildContext context, ErrorModel error) {
-                  return Center(child: Text(error.toString()));
+                  return ErrorWidget(error.toString());
                 },
                 loadMoreIndicatorBuilder: (BuildContext context) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Loading();
                 },
                 loadingBuilder: (BuildContext context) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Loading();
                 },
                 errorBuilder: (BuildContext context, ErrorModel error) {
-                  return Center(child: Text(error.toString()));
+                  return ErrorWidget(error.toString());
                 },
-              );
-            },
-          ),
+              ),
+            );
+          },
         );
       },
     );

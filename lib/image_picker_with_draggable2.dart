@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker_with_draggable/draggable_sheet.dart';
 // import 'package:core/core.dart';
 // import 'package:user_interface/user_interface.dart';
 
 import 'photo_manager.dart';
+//////author: TRAN THANH TRA
 
 class ImagePickerBottomsheet extends StatefulWidget {
   final VoidCallback onLoadMore;
@@ -88,124 +90,57 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
 
     return Stack(
       children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: height ?? minHeight,
-          child: Material(
-            elevation: 8,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Container(
-              color: Colors.white,
-              child: Column(
-                children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onPanUpdate: (details) {
-                      height ??= minHeight;
-                      // Nếu đang ở minHeight và người dùng vuốt xuống
-                      if ((height == minHeight || height! <= minHeight + 1) &&
-                          details.delta.dy > 0) {
-                        debugPrint('👋 Vuốt xuống khi đang ở minHeight');
-                        widget.hideBottomSheet();
-                      }
-                      final newHeight = (height! - details.delta.dy).clamp(
-                        minHeight,
-                        maxHeight,
-                      );
+        DraggableSheet(
+          maxHeight: maxHeight,
+          height: widget.height,
+          hideBottomSheet: () {
+            widget.hideBottomSheet();
+          },
+          child: PhotoGridView(
+            thumbnails: widget.thumbnails,
+            files: widget.files,
+            onLoadMore: widget.onLoadMore,
+            onCameraTap: _openCamera,
+            onAssetSelected: (selectedFiles) {
+              if (selectedFiles.isNotEmpty) {
+                debugPrint('Bạn đã chọn ${selectedFiles.first.path} file');
+                setState(() {
+                  filesData = selectedFiles;
+                });
 
-                      setState(() {
-                        height = newHeight;
-                      });
-                    },
-                    onPanEnd: (details) {
-                      final currentHeight = height ?? minHeight;
-                      final velocity = details.velocity.pixelsPerSecond.dy;
+                // widget.files;
+              } else {
+                debugPrint('Không có ảnh nào được chọn.');
+                setState(() {
+                  filesData = [];
+                });
+              }
+            },
+            onScrollDownAtTop: () {
+              final currentHeight = height ?? minHeight;
 
-                      // Logic tự mở rộng/thu nhỏ:
-                      // Vuốt lên (velocity âm) hoặc đã kéo lên kha khá thì mở rộng
-                      // Vuốt xuống (velocity dương) hoặc đã kéo xuống thì thu nhỏ
-                      final bool shouldExpand =
-                          velocity < -200 ||
-                          currentHeight >
-                              (minHeight + (maxHeight - minHeight) * 0.2);
-                      final bool shouldCollapse =
-                          velocity > 200 ||
-                          currentHeight <=
-                              (minHeight + (maxHeight - minHeight) * 0.2);
+              if (_isAnimatingHeight || _isClosing) return;
 
-                      setState(() {
-                        height = shouldExpand ? maxHeight : minHeight;
-                      });
-                    },
-                    child: Container(
-                      height: 30,
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      child: Center(
-                        child: Container(
-                          height: 4,
-                          width: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[600],
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: PhotoGridView(
-                      thumbnails: widget.thumbnails,
-                      files: widget.files,
-                      onLoadMore: widget.onLoadMore,
-                      onCameraTap: _openCamera,
-                      onAssetSelected: (selectedFiles) {
-                        if (selectedFiles.isNotEmpty) {
-                          debugPrint(
-                            'Bạn đã chọn ${selectedFiles.first.path} file',
-                          );
-                          setState(() {
-                            filesData = selectedFiles;
-                          });
-
-                          // widget.files;
-                        } else {
-                          debugPrint('Không có ảnh nào được chọn.');
-                          setState(() {
-                            filesData = [];
-                          });
-                        }
-                      },
-                      onScrollDownAtTop: () {
-                        final currentHeight = height ?? minHeight;
-
-                        if (_isAnimatingHeight || _isClosing) return;
-
-                        // Đang ở maxHeight thì chỉ thu nhỏ
-                        if ((currentHeight - maxHeight).abs() < 1) {
-                          _isAnimatingHeight = true;
-                          setState(() {
-                            height = minHeight;
-                          });
-                          // Reset flag sau 300ms
-                          Future.delayed(const Duration(milliseconds: 300), () {
-                            _isAnimatingHeight = false;
-                          });
-                        }
-                        // Đang ở minHeight thì mới đóng
-                        else if ((currentHeight - minHeight).abs() < 1) {
-                          _isClosing = true;
-                          Future.delayed(const Duration(milliseconds: 200), () {
-                            widget.hideBottomSheet();
-                            _isClosing = false;
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
+              // Đang ở maxHeight thì chỉ thu nhỏ
+              if ((currentHeight - maxHeight).abs() < 1) {
+                _isAnimatingHeight = true;
+                setState(() {
+                  height = minHeight;
+                });
+                // Reset flag sau 300ms
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  _isAnimatingHeight = false;
+                });
+              }
+              // Đang ở minHeight thì mới đóng
+              else if ((currentHeight - minHeight).abs() < 1) {
+                _isClosing = true;
+                Future.delayed(const Duration(milliseconds: 200), () {
+                  widget.hideBottomSheet();
+                  _isClosing = false;
+                });
+              }
+            },
           ),
         ),
         if (filesData.isNotEmpty)

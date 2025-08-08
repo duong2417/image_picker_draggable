@@ -58,7 +58,6 @@ class OptionDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     var height = 20.0;
     if (title != null || actions.isNotEmpty) {
       height = 40.0;
@@ -86,23 +85,23 @@ class OptionDrawer extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            height: height,
-            child: Row(
-              children: [
-                Expanded(child: leading),
-                Container(
-                  height: 4,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                Expanded(child: trailing),
-              ],
-            ),
-          ),
+          // SizedBox(
+          //   height: height,
+          //   child: Row(
+          //     children: [
+          //       Expanded(child: leading),
+          //       Container(
+          //         height: 4,
+          //         width: 40,
+          //         decoration: BoxDecoration(
+          //           color: Colors.grey,
+          //           borderRadius: BorderRadius.circular(6),
+          //         ),
+          //       ),
+          //       Expanded(child: trailing),
+          //     ],
+          //   ),
+          // ),
           Expanded(child: child),
         ],
       ),
