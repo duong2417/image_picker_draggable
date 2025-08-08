@@ -30,7 +30,8 @@ class PagedValueGridView<K, V> extends StatefulWidget {
     required this.loadMoreIndicatorBuilder,
     required this.loadingBuilder,
     required this.errorBuilder,
-    this.loadMoreTriggerIndex = 3,
+    this.loadMoreTriggerIndex =
+        3, //số lượng phần tử cách cuối danh sách mà tại đó sẽ trigger load more. ở đây khi user cuộn đến phần tử thứ ba từ cuối danh sách, sẽ load more
     this.scrollDirection = Axis.vertical,
     this.reverse = false,
     this.scrollController,
@@ -336,11 +337,17 @@ class _PagedValueGridViewState<K, V> extends State<PagedValueGridView<K, V>> {
               itemCount: value.itemCount,
               gridDelegate: widget.gridDelegate,
               itemBuilder: (context, index) {
+                //_hasRequestedNextPage: flag sd để tránh gửi nhiều yêu cầu load data trùng lặp trong 1 lần render
                 if (!_hasRequestedNextPage) {
                   final newPageRequestTriggerIndex =
                       items.length - widget.loadMoreTriggerIndex;
+                  /*Với loadMoreTriggerIndex = 3 (mặc định):
+Danh sách có 20 phần tử: kích hoạt tại index 17 (20-3)
+Người dùng chỉ cần cuộn đến phần tử thứ 18 là dữ liệu mới đã bắt đầu tải
+                      */
                   final isBuildingTriggerIndexItem =
                       index == newPageRequestTriggerIndex;
+                  //nếu có trang tiếp theo mới load
                   if (nextPageKey != null && isBuildingTriggerIndexItem) {
                     // Schedules the request for the end of this frame.
                     WidgetsBinding.instance.addPostFrameCallback((_) async {
