@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:user_interface/user_interface.dart';
+// import 'package:core/core.dart';
+// import 'package:user_interface/user_interface.dart';
 
 import 'photo_manager.dart';
 
@@ -17,16 +17,17 @@ class ImagePickerBottomsheet extends StatefulWidget {
 
   final List<Uint8List> thumbnails;
   final double height;
-  const ImagePickerBottomsheet(
-      {super.key,
-      required this.height,
-      required this.hideBottomSheet,
-      required this.thumbnails,
-      required this.onLoadMore,
-      required this.callbackFile,
-      required this.files,
-      required this.sx,
-      required this.sy});
+  const ImagePickerBottomsheet({
+    super.key,
+    required this.height,
+    required this.hideBottomSheet,
+    required this.thumbnails,
+    required this.onLoadMore,
+    required this.callbackFile,
+    required this.files,
+    required this.sx,
+    required this.sy,
+  });
 
   @override
   State<ImagePickerBottomsheet> createState() => _ImagePickerBottomsheetState();
@@ -39,45 +40,45 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
   bool _isClosing = false;
   List<File> filesData = [];
   _openCamera() {
-    MyBottomSheet.camera(
-        context: context,
-        sx: widget.sx,
-        sy: widget.sy,
-        onPicked: (e) {
-          widget.callbackFile([File(e.path)]);
-        });
+    // MyBottomSheet.camera(
+    //     context: context,
+    //     sx: widget.sx,
+    //     sy: widget.sy,
+    //     onPicked: (e) {
+    //       widget.callbackFile([File(e.path)]);
+    //     });
   }
 
-  Future<void> _editImage(File image) async {
-    final editedBytes = await Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => ImageEditor(
-          image: image,
-          outputFormat: OutputFormat.png,
-        ),
-        transitionsBuilder: (_, animation, __, child) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(1.0, 0.0),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          );
-        },
-      ),
-    );
+  // Future<void> _editImage(File image) async {
+  //   final editedBytes = await Navigator.of(context).push(
+  //     PageRouteBuilder(
+  //       pageBuilder: (_, __, ___) => ImageEditor(
+  //         image: image,
+  //         outputFormat: OutputFormat.png,
+  //       ),
+  //       transitionsBuilder: (_, animation, __, child) {
+  //         return SlideTransition(
+  //           position: Tween<Offset>(
+  //             begin: const Offset(1.0, 0.0),
+  //             end: Offset.zero,
+  //           ).animate(animation),
+  //           child: child,
+  //         );
+  //       },
+  //     ),
+  //   );
 
-    if (editedBytes != null && mounted) {
-      final tempDir = await getTemporaryDirectory();
-      final newFile = await File(
-              '${tempDir.path}/edited_${DateTime.now().millisecondsSinceEpoch}.png')
-          .writeAsBytes(editedBytes);
+  //   if (editedBytes != null && mounted) {
+  //     final tempDir = await getTemporaryDirectory();
+  //     final newFile = await File(
+  //             '${tempDir.path}/edited_${DateTime.now().millisecondsSinceEpoch}.png')
+  //         .writeAsBytes(editedBytes);
 
-      setState(() {
-        filesData = [newFile];
-      });
-    }
-  }
+  //     setState(() {
+  //       filesData = [newFile];
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -107,8 +108,10 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
                         debugPrint('👋 Vuốt xuống khi đang ở minHeight');
                         widget.hideBottomSheet();
                       }
-                      final newHeight = (height! - details.delta.dy)
-                          .clamp(minHeight, maxHeight);
+                      final newHeight = (height! - details.delta.dy).clamp(
+                        minHeight,
+                        maxHeight,
+                      );
 
                       setState(() {
                         height = newHeight;
@@ -121,10 +124,12 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
                       // Logic tự mở rộng/thu nhỏ:
                       // Vuốt lên (velocity âm) hoặc đã kéo lên kha khá thì mở rộng
                       // Vuốt xuống (velocity dương) hoặc đã kéo xuống thì thu nhỏ
-                      final bool shouldExpand = velocity < -200 ||
+                      final bool shouldExpand =
+                          velocity < -200 ||
                           currentHeight >
                               (minHeight + (maxHeight - minHeight) * 0.2);
-                      final bool shouldCollapse = velocity > 200 ||
+                      final bool shouldCollapse =
+                          velocity > 200 ||
                           currentHeight <=
                               (minHeight + (maxHeight - minHeight) * 0.2);
 
@@ -150,53 +155,53 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
                   ),
                   Expanded(
                     child: PhotoGridView(
-                        thumbnails: widget.thumbnails,
-                        files: widget.files,
-                        onLoadMore: widget.onLoadMore,
-                        onCameraTap: _openCamera,
-                        onAssetSelected: (selectedFiles) {
-                          if (selectedFiles.isNotEmpty) {
-                            debugPrint(
-                                'Bạn đã chọn ${selectedFiles.first.path} file');
-                            setState(() {
-                              filesData = selectedFiles;
-                            });
+                      thumbnails: widget.thumbnails,
+                      files: widget.files,
+                      onLoadMore: widget.onLoadMore,
+                      onCameraTap: _openCamera,
+                      onAssetSelected: (selectedFiles) {
+                        if (selectedFiles.isNotEmpty) {
+                          debugPrint(
+                            'Bạn đã chọn ${selectedFiles.first.path} file',
+                          );
+                          setState(() {
+                            filesData = selectedFiles;
+                          });
 
-                            // widget.files;
-                          } else {
-                            debugPrint('Không có ảnh nào được chọn.');
-                            setState(() {
-                              filesData = [];
-                            });
-                          }
-                        },
-                        onScrollDownAtTop: () {
-                          final currentHeight = height ?? minHeight;
+                          // widget.files;
+                        } else {
+                          debugPrint('Không có ảnh nào được chọn.');
+                          setState(() {
+                            filesData = [];
+                          });
+                        }
+                      },
+                      onScrollDownAtTop: () {
+                        final currentHeight = height ?? minHeight;
 
-                          if (_isAnimatingHeight || _isClosing) return;
+                        if (_isAnimatingHeight || _isClosing) return;
 
-                          // Đang ở maxHeight thì chỉ thu nhỏ
-                          if ((currentHeight - maxHeight).abs() < 1) {
-                            _isAnimatingHeight = true;
-                            setState(() {
-                              height = minHeight;
-                            });
-                            // Reset flag sau 300ms
-                            Future.delayed(const Duration(milliseconds: 300),
-                                () {
-                              _isAnimatingHeight = false;
-                            });
-                          }
-                          // Đang ở minHeight thì mới đóng
-                          else if ((currentHeight - minHeight).abs() < 1) {
-                            _isClosing = true;
-                            Future.delayed(const Duration(milliseconds: 200),
-                                () {
-                              widget.hideBottomSheet();
-                              _isClosing = false;
-                            });
-                          }
-                        }),
+                        // Đang ở maxHeight thì chỉ thu nhỏ
+                        if ((currentHeight - maxHeight).abs() < 1) {
+                          _isAnimatingHeight = true;
+                          setState(() {
+                            height = minHeight;
+                          });
+                          // Reset flag sau 300ms
+                          Future.delayed(const Duration(milliseconds: 300), () {
+                            _isAnimatingHeight = false;
+                          });
+                        }
+                        // Đang ở minHeight thì mới đóng
+                        else if ((currentHeight - minHeight).abs() < 1) {
+                          _isClosing = true;
+                          Future.delayed(const Duration(milliseconds: 200), () {
+                            widget.hideBottomSheet();
+                            _isClosing = false;
+                          });
+                        }
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -216,7 +221,8 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
                     width: widget.sx(150),
                     child: ElevatedButton(
                       onPressed: () {
-                        _editImage(filesData.first);
+                        print('Chỉnh sửa ảnh: ${filesData.first.path}');
+                        // _editImage(filesData.first);
                         // Gọi edit ở đây
                       },
                       style: ElevatedButton.styleFrom(
@@ -236,7 +242,7 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
                       widget.callbackFile(filesData);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.appTheme,
+                      backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),

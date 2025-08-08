@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:user_interface/user_interface.dart';
+// import 'package:user_interface/user_interface.dart';
 
 class PhotoGridView extends StatefulWidget {
   final List<Uint8List> thumbnails;
@@ -64,10 +64,11 @@ class _PhotoGridViewState extends State<PhotoGridView> {
       }
     });
 
-    final selectedFiles = _selectedIndices
-        .where((i) => i > 0 && i - 1 < widget.files.length)
-        .map((i) => widget.files[i - 1]) // vì index 0 là máy ảnh
-        .toList();
+    final selectedFiles =
+        _selectedIndices
+            .where((i) => i > 0 && i - 1 < widget.files.length)
+            .map((i) => widget.files[i - 1]) // vì index 0 là máy ảnh
+            .toList();
 
     widget.onAssetSelected(selectedFiles);
   }
@@ -140,7 +141,7 @@ class _PhotoGridViewState extends State<PhotoGridView> {
                     right: 6,
                     child: CircleAvatar(
                       radius: 12,
-                      backgroundColor: AppColors.appTheme,
+                      backgroundColor: Colors.pink,
                       child: Text(
                         "$selectionOrder",
                         style: const TextStyle(
