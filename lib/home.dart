@@ -1,10 +1,10 @@
 import 'dart:async';
-
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-
+import 'package:image_picker_with_draggable/image_picker_bottom_sheet.dart';
 import 'const.dart';
-import 'helper.dart';
-import 'image_picker_with_draggable.dart';
+import 'utils/helper.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -16,10 +16,18 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   late final ValueNotifier<bool> showActionUtilTapOutside;
   bool showActions = false;
+
+  // Photo loading variables
+  final ValueNotifier<List<Uint8List>> thumbnailsNotifier = ValueNotifier([]);
+  final ValueNotifier<List<File>> filesNotifier = ValueNotifier([]);
+  // Additional variables needed for the new implementation
+  final FocusNode _focusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
     showActionUtilTapOutside = ValueNotifier<bool>(false);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   double _lastKeyboardHeight = 0;
@@ -49,6 +57,9 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   dispose() {
     super.dispose();
     showActionUtilTapOutside.dispose();
+    thumbnailsNotifier.dispose();
+    filesNotifier.dispose();
+    _focusNode.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _debounceTimer?.cancel();
   }
@@ -82,7 +93,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                 children: [
                   Row(
                     children: [
-                      Expanded(child: TextField()),
+                      Expanded(child: TextField(focusNode: _focusNode)),
                       IconButton(
                         onPressed: () {
                           showActionUtilTapOutside.value = true;
@@ -106,7 +117,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                       return Container(
                         height:
                             maxHeightKeyboard -
-                            heightKeyboard, // keyboardController.heightKeyboard,
+                            heightKeyboard, //TODO ko an toàn: check số âm
                         color: Colors.amber,
                         child: Center(child: Text('This is a bottom bar')),
                       );
@@ -117,15 +128,20 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
 
               ValueListenableBuilder(
                 valueListenable: showActionUtilTapOutside,
-                builder: (context, showActionUtilTapOutside, child) {
-                  if (!showActionUtilTapOutside) {
-                    return SizedBox.shrink();
+                builder: (context, showActionUtilTapOutside1, child) {
+                  if (!showActionUtilTapOutside1) {
+                    return const SizedBox.shrink();
                   }
                   return ImagePickerBottomsheet(
-                    key: ValueKey(
-                      heightKeyboard,
-                    ), //đảm bảo luôn rebuild lại mỗi khi heightKeyboard thay đổi (cụ thể là khi keyboard dãn dần ra thì sheet thu dần lại và ngược lại, đảm bảo textfield luôn đứng yên)
-                    height: maxHeightKeyboard - heightKeyboard,
+                    key: ValueKey(heightKeyboard), //cp
+                    height:
+                        maxHeightKeyboard -
+                        heightKeyboard, //TODO ko an toàn: check số âm
+                    hideBottomSheet: () {
+                      showActionUtilTapOutside.value = false;
+                      _focusNode.requestFocus();
+                      debugPrint('Bẹp tiếp nè');
+                    },
                   );
                 },
               ),
