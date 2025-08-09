@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker_with_draggable/chat_image_grid.dart';
 import 'package:image_picker_with_draggable/image_attachment/gallery_attachment.dart';
 import 'package:image_picker_with_draggable/models/message.dart';
 import 'package:image_picker_with_draggable/image_attachment/local_image_attachment.dart';
@@ -52,24 +53,6 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildAttachments(BuildContext context) {
-    final galleryAttachments =
-        message.attachments
-            .where(
-              (attachment) => attachment.type == AttachmentType.image,
-            ) //check thêm cho chắc thôi, chứ chắc chắn là image rồi
-            .toList();
-    return StreamGalleryAttachment(
-      attachments: galleryAttachments,
-      message: message,
-      itemBuilder: (BuildContext context, int index) {
-        final attachment = galleryAttachments[index];
-        return InkWell(
-          onTap: () {
-            // Handle attachment tap if needed
-          },
-          child: LocalImageAttachment(file: attachment.file!),
-        );
-      },
-    );
+    return ChatImageGrid(message: message);
   }
 }
