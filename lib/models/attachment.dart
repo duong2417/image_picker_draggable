@@ -16,6 +16,8 @@ class Attachment extends Equatable {
     this.createdAt,
     Map<String, Object?> extraData = const {},
     this.uploadState = const UploadState.preparing(),
+    this.originalWidth,
+    this.originalHeight,
   }) : id = id ?? const Uuid().v4(),
        _type = switch (type) {
          String() => AttachmentType(type),
@@ -40,6 +42,17 @@ class Attachment extends Equatable {
   final Map<String, Object?> extraData;
   final UploadState uploadState; //default value: success
   final AttachmentType? _type;
+
+  /// The original width of the attached image.
+  final int? originalWidth;
+
+  /// The original height of the attached image.
+  final int? originalHeight;
+
+  AttachmentType? get type {
+    return _type;
+  }
+
   final Uri? localUri;
 
   int? get fileSize => extraData['file_size'] as int?;
@@ -58,6 +71,9 @@ class Attachment extends Equatable {
     extraData,
     fileSize,
     uploadState,
+    type,
+    originalWidth,
+    originalHeight,
   ];
 
   Attachment copyWith({
@@ -70,11 +86,14 @@ class Attachment extends Equatable {
     AttachmentFile? file,
     Map<String, Object?>? extraData,
     UploadState? uploadState,
+    AttachmentType? type,
+    int? originalWidth,
+    int? originalHeight,
   }) {
     return Attachment(
       id: id ?? this.id,
       name: name ?? this.name,
-      type: _type?.rawType,
+      type: type ?? _type?.rawType,
       file: file ?? this.file,
       url: url ?? this.url,
       thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
@@ -82,6 +101,8 @@ class Attachment extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       extraData: extraData ?? this.extraData,
       uploadState: uploadState ?? this.uploadState,
+      originalWidth: originalWidth ?? this.originalWidth,
+      originalHeight: originalHeight ?? this.originalHeight,
     );
   }
 }

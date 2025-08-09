@@ -1,0 +1,14 @@
+    Map<String, List<Attachment>> attachments,
+
+    final galleryAttachments = [...attachments.values.expand((it) => it)];
+
+onAttachmentTap
+
+buildMessageContent, MessageWidgetContent, MessageCard, ParseAttachments
+StreamAttachmentWidgetBuilder.defaultBuilders
+
+    final attachments = message.attachments.grouped;
+
+    AttachmentWidgetCatalog
+
+ImageAttachmentBuilder, StreamImageAttachment, StreamImageAttachmentThumbnail

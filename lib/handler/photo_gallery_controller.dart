@@ -9,7 +9,8 @@ class PhotoGalleryController extends PagedValueNotifier<int, AssetEntity> {
   final int limit;
 
   Future<AssetPathEntity?> _getRecentAssetPathList({
-    RequestType type = RequestType.common, //image and video
+    RequestType type = RequestType.image,
+    // RequestType type = RequestType.common, //image and video
     FilterOptionGroup? filterOption,
   }) {
     return PhotoManager.getAssetPathList(

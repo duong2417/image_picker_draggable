@@ -13,3 +13,10 @@ const kDefaultMaxAttachmentCount = 10;
 const maxCDNImageResolution = 16800000;
 
 const Color disabledColor = Colors.grey;
+
+//////MESSAGE BUBBLE
+final double widthSingleImage = 150;
+final double heightSingleImage = 300;
+const double borderRadiusBubble = 16;
+const defaultBorderBubble = Radius.circular(borderRadiusBubble);
+// final defaultBorderBubble = BorderRadius.circular(borderRadiusBubble);

@@ -13,10 +13,12 @@ class ImagePickerBottomsheet extends StatefulWidget {
     required this.height,
     required this.hideBottomSheet,
     this.initialAttachments,
+    required this.attachmentPickerController,
   });
   final double height;
   final VoidCallback hideBottomSheet;
   final List<Attachment>? initialAttachments;
+  final AttachmentPickerController attachmentPickerController;
 
   @override
   State<ImagePickerBottomsheet> createState() => _ImagePickerBottomsheetState();
@@ -26,21 +28,18 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
   double? height;
   bool _isAnimatingHeight = false;
   bool _isClosing = false;
-  late final AttachmentPickerController _controller;
   late final ScrollController scrollController;
+  late final AttachmentPickerController _controller;
   @override
   void initState() {
     super.initState();
-    _controller = AttachmentPickerController(
-      initialAttachments: widget.initialAttachments,
-    );
     scrollController = ScrollController();
+    _controller = widget.attachmentPickerController;
   }
 
   @override
   void dispose() {
     scrollController.dispose();
-    _controller.dispose();
     super.dispose();
   }
 
@@ -49,61 +48,81 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
     final screenHeight = MediaQuery.sizeOf(context).height;
     final minHeight = widget.height;
     final maxHeight = screenHeight * 0.9;
-    return DraggableSheet(
-      height: widget.height,
-      maxHeight: maxHeight,
-      hideBottomSheet: () {
-        widget.hideBottomSheet();
+    return ValueListenableBuilder<AttachmentPickerValue>(
+      valueListenable: _controller,
+      builder: (context, atms, _) {
+        final attachment = _controller.value.attachments;
+        final selectedIds = attachment.map((it) => it.id);
+        return DraggableSheet(
+          height: widget.height,
+          maxHeight: maxHeight,
+          hideBottomSheet: () {
+            widget.hideBottomSheet();
+          },
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              GalleryPicker(
+                selectedMediaItems: selectedIds,
+                onTap: (media) async {
+                  debugPrint('Tapped on media: ${media.id}');
+                  try {
+                    if (selectedIds.contains(media.id)) {
+                      return await _controller.removeAssetAttachment(media);
+                    }
+                    return await _controller.addAssetAttachment(media);
+                  } catch (e, stk) {
+                    debugPrint('Error adding/removing attachment: $e\n$stk');
+                    rethrow;
+                  }
+                },
+                scrollController: scrollController,
+                onScrollDownAtTop: () {
+                  final currentHeight = height ?? minHeight;
+
+                  if (_isAnimatingHeight || _isClosing) return;
+
+                  // Đang ở maxHeight thì chỉ thu nhỏ
+                  if ((currentHeight - maxHeight).abs() < 1) {
+                    _isAnimatingHeight = true;
+                    setState(() {
+                      height = minHeight;
+                    });
+                    // Reset flag sau 300ms
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      _isAnimatingHeight = false;
+                    });
+                  }
+                  // Đang ở minHeight thì mới đóng
+                  else if ((currentHeight - minHeight).abs() < 1) {
+                    _isClosing = true;
+                    Future.delayed(const Duration(milliseconds: 200), () {
+                      widget.hideBottomSheet();
+                      _isClosing = false;
+                    });
+                  }
+                },
+              ),
+              if (attachment.isNotEmpty)
+                Container(
+                  height: 50,
+                  width: double.infinity,
+                  color: Colors.black.withOpacity(0.5),
+                  child: Center(
+                    child: Text(
+                      'Đã chọn ${attachment.length} ảnh',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
       },
-      child: ValueListenableBuilder<AttachmentPickerValue>(
-        valueListenable: _controller,
-        builder: (context, atms, _) {
-          final attachment = _controller.value.attachments;
-          final selectedIds = attachment.map((it) => it.id);
-          return GalleryPicker(
-            selectedMediaItems: selectedIds,
-            onTap: (media) async {
-              debugPrint('Tapped on media: ${media.id}');
-              try {
-                if (selectedIds.contains(media.id)) {
-                  return await _controller.removeAssetAttachment(media);
-                }
-                return await _controller.addAssetAttachment(media);
-              } catch (e, stk) {
-                // if (onError != null) return onError.call(e, stk);
-                debugPrint('Error adding/removing attachment: $e');
-                rethrow;
-              }
-            },
-            scrollController: scrollController,
-            onScrollDownAtTop: () {
-              final currentHeight = height ?? minHeight;
-
-              if (_isAnimatingHeight || _isClosing) return;
-
-              // Đang ở maxHeight thì chỉ thu nhỏ
-              if ((currentHeight - maxHeight).abs() < 1) {
-                _isAnimatingHeight = true;
-                setState(() {
-                  height = minHeight;
-                });
-                // Reset flag sau 300ms
-                Future.delayed(const Duration(milliseconds: 300), () {
-                  _isAnimatingHeight = false;
-                });
-              }
-              // Đang ở minHeight thì mới đóng
-              else if ((currentHeight - minHeight).abs() < 1) {
-                _isClosing = true;
-                Future.delayed(const Duration(milliseconds: 200), () {
-                  widget.hideBottomSheet();
-                  _isClosing = false;
-                });
-              }
-            },
-          );
-        },
-      ),
     );
   }
 }
