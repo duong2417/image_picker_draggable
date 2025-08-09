@@ -2,10 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/models/attachment.dart';
 import 'package:image_picker_with_draggable/models/message.dart';
-import 'package:image_picker_with_draggable/thumbnail/image_thumbnail.dart';
+import 'package:image_picker_with_draggable/image_attachment/local_image_attachment.dart';
 import 'package:image_picker_with_draggable/utils/extensions.dart';
 
-import 'common/flex_grid.dart';
+import '../common/flex_grid.dart';
 
 /// {@template streamGalleryAttachment}
 /// Constructs a gallery of images, videos, and gifs from a list of attachments.
@@ -29,7 +29,7 @@ class StreamGalleryAttachment extends StatelessWidget {
     required this.attachments,
     required this.message,
     this.shape,
-    this.constraints = const BoxConstraints(),
+    this.constraints,
     this.spacing = 2.0,
     this.runSpacing = 2.0,
     required this.itemBuilder,
@@ -47,7 +47,7 @@ class StreamGalleryAttachment extends StatelessWidget {
   final ShapeBorder? shape;
 
   /// The constraints of the [attachments]
-  final BoxConstraints constraints;
+  final BoxConstraints? constraints;
 
   /// How much space to place between children in a run in the main axis.
   ///
@@ -70,11 +70,6 @@ class StreamGalleryAttachment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // assert(
-    //   attachments.length >= 2,
-    //   'Gallery should have at least 2 attachments, found ${attachments.length}',
-    // );
-
     final shape =
         this.shape ??
         RoundedRectangleBorder(
@@ -86,7 +81,7 @@ class StreamGalleryAttachment extends StatelessWidget {
         );
 
     return Container(
-      constraints: constraints,
+      constraints: constraints ?? BoxConstraints.tightFor(width: 256, height: 195),
       clipBehavior: Clip.hardEdge,
       decoration: ShapeDecoration(shape: shape),
       // Added a builder just for the sake of calculating the image count
@@ -95,7 +90,11 @@ class StreamGalleryAttachment extends StatelessWidget {
         builder: (context) {
           final attachmentCount = attachments.length;
           if (attachmentCount == 1) {
-            return LocalImageAttachment(file: attachments[0].file!);
+            final atm = attachments[0];
+            return AspectRatio(
+              aspectRatio: atm.originalSize?.aspectRatio ?? 1,
+              child: LocalImageAttachment(file: atm.file!),
+            );
           }
           if (attachmentCount == 2) {
             return _buildForTwo(context, attachments);
@@ -252,7 +251,7 @@ class StreamGalleryAttachment extends StatelessWidget {
             color: Colors.black38,
             child: Center(
               child: Text(
-                '+$remaining',
+                '+$remaining ảnh',
                 style: const TextStyle(
                   fontSize: 26,
                   color: Colors.white,

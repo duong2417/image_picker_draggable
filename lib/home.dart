@@ -98,6 +98,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
 
     // Clear text field
     _textController.clear();
+    attachmentCtrl.clearAttachments();
 
     // Scroll to bottom
     WidgetsBinding.instance.addPostFrameCallback((_) {

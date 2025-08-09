@@ -18,21 +18,22 @@ class MessageListView extends StatelessWidget {
       return const Center(
         child: Text(
           'Chưa có tin nhắn nào',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
       );
     }
 
     return ListView.builder(
       controller: scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       reverse: true, // Tin nhắn mới nhất ở dưới cùng
       itemCount: messages.length,
       itemBuilder: (context, index) {
         final message = messages[messages.length - 1 - index];
-        return MessageBubble(message: message);
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: MessageBubble(message: message),
+        );
       },
     );
   }

@@ -81,19 +81,19 @@ class FlexGrid extends StatelessWidget {
     this.reverse = false,
     this.spacing = 2.0,
     this.runSpacing = 2.0,
-  })  : assert(
-          pattern.count == children.length,
-          'The number of children must match the number of cells in the matrix',
-        ),
-        assert(
-          maxChildren == null || maxChildren <= pattern.count,
-          'The number of maxChildren must be less than or equal to the number '
-          'of cells in the matrix',
-        ),
-        assert(
-          maxChildren == null || overlayBuilder != null,
-          'overlayBuilder must be provided when maxChildren is not null',
-        );
+  }) : assert(
+         pattern.count == children.length,
+         'The number of children must match the number of cells in the matrix',
+       ),
+       assert(
+         maxChildren == null || maxChildren <= pattern.count,
+         'The number of maxChildren must be less than or equal to the number '
+         'of cells in the matrix',
+       ),
+       assert(
+         maxChildren == null || overlayBuilder != null,
+         'overlayBuilder must be provided when maxChildren is not null',
+       );
 
   /// The pattern of the grid.
   ///
@@ -179,9 +179,10 @@ class FlexGrid extends StatelessWidget {
     // This is used to determine which child to render next.
     var childIndex = 0;
 
-    return Flex(
+    final flexWidget = Flex(
       spacing: spacing,
       direction: primaryDirection,
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         for (final row in pattern)
           Expanded(
@@ -212,16 +213,21 @@ class FlexGrid extends StatelessWidget {
                   }
 
                   // Otherwise, return the child.
-                  return Expanded(
-                    flex: flex,
-                    child: children[childIndex++],
-                  );
+                  return Expanded(flex: flex, child: children[childIndex++]);
                 }),
               ],
             ),
           ),
       ],
     );
+
+    // Wrap with IntrinsicHeight when primary direction is vertical
+    // to provide bounded height constraints
+    if (primaryDirection == Axis.vertical) {
+      return IntrinsicHeight(child: flexWidget);
+    }
+
+    return flexWidget;
   }
 }
 
@@ -231,11 +237,7 @@ class FlexGrid extends StatelessWidget {
 /// {@endtemplate}
 class Gap extends StatelessWidget {
   /// {@macro gap}
-  const Gap({
-    super.key,
-    required this.direction,
-    this.spacing = 0.0,
-  });
+  const Gap({super.key, required this.direction, this.spacing = 0.0});
 
   /// The direction of the gap.
   final Axis direction;

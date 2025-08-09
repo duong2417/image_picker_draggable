@@ -59,46 +59,67 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
           hideBottomSheet: () {
             widget.hideBottomSheet();
           },
-          child: GalleryPicker(
-            selectedMediaItems: selectedIds,
-            onTap: (media) async {
-              debugPrint('Tapped on media: ${media.id}');
-              try {
-                if (selectedIds.contains(media.id)) {
-                  return await _controller.removeAssetAttachment(media);
-                }
-                return await _controller.addAssetAttachment(media);
-              } catch (e, stk) {
-                debugPrint('Error adding/removing attachment: $e\n$stk');
-                rethrow;
-              }
-            },
-            scrollController: scrollController,
-            onScrollDownAtTop: () {
-              final currentHeight = height ?? minHeight;
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              GalleryPicker(
+                selectedMediaItems: selectedIds,
+                onTap: (media) async {
+                  debugPrint('Tapped on media: ${media.id}');
+                  try {
+                    if (selectedIds.contains(media.id)) {
+                      return await _controller.removeAssetAttachment(media);
+                    }
+                    return await _controller.addAssetAttachment(media);
+                  } catch (e, stk) {
+                    debugPrint('Error adding/removing attachment: $e\n$stk');
+                    rethrow;
+                  }
+                },
+                scrollController: scrollController,
+                onScrollDownAtTop: () {
+                  final currentHeight = height ?? minHeight;
 
-              if (_isAnimatingHeight || _isClosing) return;
+                  if (_isAnimatingHeight || _isClosing) return;
 
-              // Đang ở maxHeight thì chỉ thu nhỏ
-              if ((currentHeight - maxHeight).abs() < 1) {
-                _isAnimatingHeight = true;
-                setState(() {
-                  height = minHeight;
-                });
-                // Reset flag sau 300ms
-                Future.delayed(const Duration(milliseconds: 300), () {
-                  _isAnimatingHeight = false;
-                });
-              }
-              // Đang ở minHeight thì mới đóng
-              else if ((currentHeight - minHeight).abs() < 1) {
-                _isClosing = true;
-                Future.delayed(const Duration(milliseconds: 200), () {
-                  widget.hideBottomSheet();
-                  _isClosing = false;
-                });
-              }
-            },
+                  // Đang ở maxHeight thì chỉ thu nhỏ
+                  if ((currentHeight - maxHeight).abs() < 1) {
+                    _isAnimatingHeight = true;
+                    setState(() {
+                      height = minHeight;
+                    });
+                    // Reset flag sau 300ms
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      _isAnimatingHeight = false;
+                    });
+                  }
+                  // Đang ở minHeight thì mới đóng
+                  else if ((currentHeight - minHeight).abs() < 1) {
+                    _isClosing = true;
+                    Future.delayed(const Duration(milliseconds: 200), () {
+                      widget.hideBottomSheet();
+                      _isClosing = false;
+                    });
+                  }
+                },
+              ),
+              if (attachment.isNotEmpty)
+                Container(
+                  height: 50,
+                  width: double.infinity,
+                  color: Colors.black.withOpacity(0.5),
+                  child: Center(
+                    child: Text(
+                      'Đã chọn ${attachment.length} ảnh',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         );
       },

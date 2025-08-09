@@ -120,4 +120,8 @@ class AttachmentPickerController extends ValueNotifier<AttachmentPickerValue> {
     //lưu file vào thư mục cache của ứng dụng
     return AttachmentHandler.instance.saveAttachmentFile(attachmentFile: file);
   }
+
+  void clearAttachments() {
+    value = value.copyWith(attachments: []);
+  }
 }
