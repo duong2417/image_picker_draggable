@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/image_picker_bottom_sheet.dart';
+import 'package:image_picker_with_draggable/models/message.dart';
+import 'package:image_picker_with_draggable/widgets/message_list_view.dart';
 import 'const.dart';
 import 'models/attachment.dart';
 import 'utils/helper.dart';
@@ -23,6 +25,11 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   final ValueNotifier<List<File>> filesNotifier = ValueNotifier([]);
   // Additional variables needed for the new implementation
   final FocusNode _focusNode = FocusNode();
+  final TextEditingController _textController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  
+  // Messages list
+  final ValueNotifier<List<Message>> messagesNotifier = ValueNotifier([]);
 
   @override
   void initState() {
@@ -61,8 +68,48 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
     thumbnailsNotifier.dispose();
     filesNotifier.dispose();
     _focusNode.dispose();
+    _textController.dispose();
+    _scrollController.dispose();
+    messagesNotifier.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _debounceTimer?.cancel();
+  }
+
+  void _sendMessage({String? text, List<Attachment>? attachments}) {
+    if ((text == null || text.trim().isEmpty) && 
+        (attachments == null || attachments.isEmpty)) {
+      return; // Không gửi tin nhắn trống
+    }
+
+    final message = Message.create(
+      text: text?.trim(),
+      attachments: attachments,
+      isFromUser: true,
+    );
+
+    // Thêm tin nhắn vào danh sách
+    final currentMessages = List<Message>.from(messagesNotifier.value);
+    currentMessages.add(message);
+    messagesNotifier.value = currentMessages;
+
+    // Clear text field
+    _textController.clear();
+
+    // Scroll to bottom
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+
+    debugPrint('Đã gửi tin nhắn: ${message.type.name}');
+    if (message.attachments.isNotEmpty) {
+      debugPrint('Số lượng attachments: ${message.attachments.length}');
+    }
   }
 
   @override
@@ -90,39 +137,87 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
             alignment: Alignment.bottomCenter,
             children: [
               Column(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(child: TextField(focusNode: _focusNode)),
-                      IconButton(
-                        onPressed: () {
-                          showActionUtilTapOutside.value = true;
-                          showActions = !showActions;
-                          if (showActions == true) {
-                            hideKeyboard();
-                          } else {
-                            showKeyboard();
-                          }
+                  // Message list
+                  Expanded(
+                    child: Container(
+                      color: Colors.white,
+                      child: ValueListenableBuilder<List<Message>>(
+                        valueListenable: messagesNotifier,
+                        builder: (context, messages, child) {
+                          return MessageListView(
+                            messages: messages,
+                            scrollController: _scrollController,
+                          );
                         },
-                        icon: Icon(Icons.more_vert),
                       ),
-                    ],
+                    ),
                   ),
-                  ValueListenableBuilder(
-                    valueListenable: showActionUtilTapOutside,
-                    builder: (context, showActionUtilTapOutside, child) {
-                      if (!showActionUtilTapOutside) {
-                        return SizedBox.shrink();
-                      }
-                      return Container(
-                        height:
-                            maxHeightKeyboard -
-                            heightKeyboard, //TODO ko an toàn: check số âm
-                        color: Colors.amber,
-                        child: Center(child: Text('This is a bottom bar')),
-                      );
-                    },
+                  // Input area
+                  Container(
+                    color: Colors.green,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _textController,
+                                focusNode: _focusNode,
+                                decoration: const InputDecoration(
+                                  hintText: 'Nhập tin nhắn...',
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                onSubmitted: (text) {
+                                  _sendMessage(text: text);
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                final text = _textController.text;
+                                if (text.isNotEmpty) {
+                                  _sendMessage(text: text);
+                                }
+                              },
+                              icon: const Icon(Icons.send),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                showActionUtilTapOutside.value = true;
+                                showActions = !showActions;
+                                if (showActions == true) {
+                                  hideKeyboard();
+                                } else {
+                                  showKeyboard();
+                                }
+                              },
+                              icon: const Icon(Icons.more_vert),
+                            ),
+                          ],
+                        ),
+                        ValueListenableBuilder(
+                          valueListenable: showActionUtilTapOutside,
+                          builder: (context, showActionUtilTapOutside, child) {
+                            if (!showActionUtilTapOutside) {
+                              return const SizedBox.shrink();
+                            }
+                            return Container(
+                              height:
+                                  maxHeightKeyboard -
+                                  heightKeyboard, //TODO ko an toàn: check số âm
+                              color: Colors.amber,
+                              child: const Center(child: Text('This is a bottom bar')),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -144,7 +239,18 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                       debugPrint('Bẹp tiếp nè');
                     },
                     onSend: (List<Attachment> attachments) {
-                      debugPrint('Gửi ${attachments.length} tệp đính kèm');
+                      // Gửi tin nhắn với attachments và text (nếu có)
+                      final text = _textController.text.trim();
+                      _sendMessage(
+                        text: text.isNotEmpty ? text : null,
+                        attachments: attachments,
+                      );
+                      
+                      // Đóng bottom sheet
+                      showActionUtilTapOutside.value = false;
+                      _focusNode.requestFocus();
+                      
+                      debugPrint('Đã gửi ${attachments.length} tệp đính kèm');
                     },
                   );
                 },
