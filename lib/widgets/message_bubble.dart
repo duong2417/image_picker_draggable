@@ -53,6 +53,6 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildAttachments(BuildContext context) {
-    return ChatImageGrid(message: message);
+    return ChatImageGrid(message: message, key: ValueKey(message.id));
   }
 }
