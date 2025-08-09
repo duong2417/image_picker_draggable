@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/models/attachment.dart';
 import 'package:image_picker_with_draggable/models/message.dart';
+import 'package:image_picker_with_draggable/thumbnail/image_thumbnail.dart';
 import 'package:image_picker_with_draggable/utils/extensions.dart';
 
 import 'common/flex_grid.dart';
@@ -69,12 +70,13 @@ class StreamGalleryAttachment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    assert(
-      attachments.length >= 2,
-      'Gallery should have at least 2 attachments, found ${attachments.length}',
-    );
+    // assert(
+    //   attachments.length >= 2,
+    //   'Gallery should have at least 2 attachments, found ${attachments.length}',
+    // );
 
-    final shape = this.shape ??
+    final shape =
+        this.shape ??
         RoundedRectangleBorder(
           side: BorderSide(
             color: Colors.grey,
@@ -92,6 +94,9 @@ class StreamGalleryAttachment extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final attachmentCount = attachments.length;
+          if (attachmentCount == 1) {
+            return LocalImageAttachment(file: attachments[0].file!);
+          }
           if (attachmentCount == 2) {
             return _buildForTwo(context, attachments);
           }
@@ -128,10 +133,7 @@ class StreamGalleryAttachment extends StatelessWidget {
         ],
         spacing: spacing,
         runSpacing: runSpacing,
-        children: [
-          itemBuilder(context, 0),
-          itemBuilder(context, 1),
-        ],
+        children: [itemBuilder(context, 0), itemBuilder(context, 1)],
       );
     }
 
@@ -148,10 +150,7 @@ class StreamGalleryAttachment extends StatelessWidget {
         ],
         spacing: spacing,
         runSpacing: runSpacing,
-        children: [
-          itemBuilder(context, 0),
-          itemBuilder(context, 1),
-        ],
+        children: [itemBuilder(context, 0), itemBuilder(context, 1)],
       );
     }
 
@@ -175,10 +174,7 @@ class StreamGalleryAttachment extends StatelessWidget {
       ],
       spacing: spacing,
       runSpacing: runSpacing,
-      children: [
-        itemBuilder(context, 0),
-        itemBuilder(context, 1),
-      ],
+      children: [itemBuilder(context, 0), itemBuilder(context, 1)],
     );
   }
 
@@ -221,7 +217,9 @@ class StreamGalleryAttachment extends StatelessWidget {
   }
 
   Widget _buildForFourOrMore(
-      BuildContext context, List<Attachment> attachments) {
+    BuildContext context,
+    List<Attachment> attachments,
+  ) {
     final pattern = <List<int>>[];
     final children = <Widget>[];
 
