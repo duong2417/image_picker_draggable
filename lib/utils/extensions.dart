@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/material.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker_with_draggable/handler/attachment_picker_controller.dart';
 import 'package:image_picker_with_draggable/const.dart';
 import 'package:image_picker_with_draggable/models/attachment.dart';
 import 'package:image_picker_with_draggable/models/attachment_file.dart';
+import 'package:image_size_getter/file_input.dart';
+import 'package:image_size_getter/image_size_getter.dart' hide Size;
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -132,4 +135,46 @@ extension type const AttachmentType(String rawType) implements String {
 
   /// Serialize to json string.
   static String? toJson(String? type) => type;
+}
+
+extension OriginalSizeX on Attachment {
+  /// Returns the size of the attachment if it is an image or giffy.
+  /// Otherwise, returns null.
+  Size? get originalSize {
+    // Return null if the attachment is not an image or giffy.
+    if (type != AttachmentType.image && type != AttachmentType.giphy) {
+      return null;
+    }
+
+    // Calculate size locally if the attachment is not uploaded yet.
+    final file = this.file;
+    if (file != null) {
+      ImageInput? input;
+      if (file.bytes != null) {
+        input = MemoryInput(file.bytes!);
+      } else if (file.path != null) {
+        input = FileInput(File(file.path!));
+      }
+
+      // Return null if the file does not contain enough information.
+      if (input == null) return null;
+
+      try {
+        final size = ImageSizeGetter.getSizeResult(input).size;
+        if (size.needRotate) {
+          return Size(size.height.toDouble(), size.width.toDouble());
+        }
+        return Size(size.width.toDouble(), size.height.toDouble());
+      } catch (e, stk) {
+        debugPrint('Error getting image size: $e\n$stk');
+        return null;
+      }
+    }
+
+    // Otherwise, use the size provided by the server.
+    final width = originalWidth;
+    final height = originalHeight;
+    if (width == null || height == null) return null;
+    return Size(width.toDouble(), height.toDouble());
+  }
 }

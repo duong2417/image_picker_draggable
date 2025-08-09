@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/image_picker_bottom_sheet.dart';
 import 'const.dart';
+import 'models/attachment.dart';
 import 'utils/helper.dart';
 
 class HomeView extends StatefulWidget {
@@ -141,6 +142,9 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                       showActionUtilTapOutside.value = false;
                       _focusNode.requestFocus();
                       debugPrint('Bẹp tiếp nè');
+                    },
+                    onSend: (List<Attachment> attachments) {
+                      debugPrint('Gửi ${attachments.length} tệp đính kèm');
                     },
                   );
                 },
