@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/chat_image_grid.dart';
-import 'package:image_picker_with_draggable/image_attachment/gallery_attachment.dart';
+import 'package:image_picker_with_draggable/models/attachment.dart';
 import 'package:image_picker_with_draggable/models/message.dart';
-import 'package:image_picker_with_draggable/image_attachment/local_image_attachment.dart';
-import 'package:image_picker_with_draggable/utils/extensions.dart';
 import 'package:intl/intl.dart';
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.message});
+  const MessageBubble({super.key, required this.message, this.onRetry});
 
   final Message message;
+  final void Function(Attachment attachment)? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +52,10 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildAttachments(BuildContext context) {
-    return ChatImageGrid(message: message, key: ValueKey(message.id));
+    return ChatImageGrid(
+      message: message,
+      key: ValueKey(message.id),
+      onRetry: onRetry,
+    );
   }
 }
