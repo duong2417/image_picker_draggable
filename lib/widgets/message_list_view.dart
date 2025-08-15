@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker_with_draggable/models/attachment.dart';
 import 'package:image_picker_with_draggable/models/message.dart';
 import 'package:image_picker_with_draggable/widgets/message_bubble.dart';
 
@@ -7,10 +8,13 @@ class MessageListView extends StatelessWidget {
     super.key,
     required this.messages,
     this.scrollController,
+    this.onRetry,
   });
 
   final List<Message> messages;
   final ScrollController? scrollController;
+  // Callback for retrying a failed upload for a specific message + attachment.
+  final void Function(Message message, Attachment attachment)? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +36,12 @@ class MessageListView extends StatelessWidget {
         final message = messages[messages.length - 1 - index];
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
-          child: MessageBubble(message: message),
+          child: MessageBubble(
+            message: message,
+            onRetry: onRetry == null
+                ? null
+                : (attachment) => onRetry!(message, attachment),
+          ),
         );
       },
     );

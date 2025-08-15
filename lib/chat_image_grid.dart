@@ -6,11 +6,13 @@ import 'package:image_picker_with_draggable/models/message.dart';
 import 'dart:io';
 import 'dart:async';
 
+import 'package:image_picker_with_draggable/models/upload_state.dart';
 import 'package:image_picker_with_draggable/utils/extensions.dart';
 
 class ChatImageGrid extends StatefulWidget {
   final Message message;
-  const ChatImageGrid({super.key, required this.message});
+  final void Function(Attachment attachment)? onRetry;
+  const ChatImageGrid({super.key, required this.message, this.onRetry});
 
   @override
   State<ChatImageGrid> createState() => _ChatImageGridState();
@@ -29,6 +31,34 @@ class _ChatImageGridState extends State<ChatImageGrid> {
             .toList();
     _globalKey = GlobalKey();
     _loadImageDimensions();
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatImageGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Keep attachments in sync to get latest uploadState
+    final newAttachments = widget.message.attachments
+        .where((attachment) => attachment.type == AttachmentType.image)
+        .toList();
+    // If count or ids changed, reload dimensions
+    final needReload = newAttachments.length != _attachments.length ||
+        !_sameIds(newAttachments, _attachments);
+    _attachments = newAttachments;
+    if (needReload) {
+      _imageDimensions = [];
+      _loadImageDimensions();
+    } else {
+      // still trigger rebuild to reflect new upload state overlays
+      setState(() {});
+    }
+  }
+
+  bool _sameIds(List<Attachment> a, List<Attachment> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+    }
+    return true;
   }
 
   Future<void> _loadImageDimensions() async {
@@ -112,6 +142,9 @@ class _ChatImageGridState extends State<ChatImageGrid> {
       return const SizedBox.shrink();
     }
 
+    final upload = file.uploadState;
+    final isFailed = upload.isFailed;
+
     return ClipRRect(
       borderRadius:
           customBorderRadius ?? BorderRadius.circular(borderRadiusBubble),
@@ -121,7 +154,7 @@ class _ChatImageGridState extends State<ChatImageGrid> {
           // Mở ảnh trong chế độ xem đầy đủ
         },
         child: Stack(
-          alignment: Alignment.bottomLeft,
+          alignment: Alignment.center,
           children: [
             Hero(
               tag: 'image_${file.id}',
@@ -132,8 +165,76 @@ class _ChatImageGridState extends State<ChatImageGrid> {
                 fit: BoxFit.cover,
               ),
             ),
+            // Overlays for upload states
+            if (upload.isPreparing)
+              _buildOverlay(width, height,
+                  child: const SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  )),
+            if (upload.isInProgress)
+              _buildProgressOverlay(width, height, upload as InProgress),
+            if (isFailed)
+              _buildFailedOverlay(width, height, onRetry: () {
+                widget.onRetry?.call(file);
+              }),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildOverlay(double w, double h, {required Widget child}) {
+    return Container(
+      width: w,
+      height: h,
+      color: Colors.black.withOpacity(0.25),
+      alignment: Alignment.center,
+      child: child,
+    );
+  }
+
+  Widget _buildProgressOverlay(double w, double h, InProgress p) {
+    final percent = p.total == 0 ? 0.0 : p.uploaded / p.total;
+    return _buildOverlay(
+      w,
+      h,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: w * 0.6,
+            child: LinearProgressIndicator(value: percent),
+          ),
+          const SizedBox(height: 6),
+          Text('${(percent * 100).toStringAsFixed(0)}%',
+              style: const TextStyle(color: Colors.white)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFailedOverlay(double w, double h, {VoidCallback? onRetry}) {
+    return _buildOverlay(
+      w,
+      h,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.white, size: 28),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: onRetry,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              textStyle: const TextStyle(fontSize: 12),
+            ),
+            child: const Text('Thử lại'),
+          ),
+        ],
       ),
     );
   }
@@ -221,7 +322,7 @@ class _ChatImageGridState extends State<ChatImageGrid> {
           _attachments[0],
           cellWidth,
           cellHeight,
-          customBorderRadius: BorderRadius.only(
+          customBorderRadius: const BorderRadius.only(
             topLeft: defaultBorderBubble,
             bottomLeft: defaultBorderBubble,
           ),

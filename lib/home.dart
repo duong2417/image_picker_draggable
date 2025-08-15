@@ -9,6 +9,8 @@ import 'package:image_picker_with_draggable/widgets/message_list_view.dart';
 import 'const.dart';
 import 'models/attachment.dart';
 import 'utils/helper.dart';
+import 'models/upload_state.dart';
+import 'services/upload_simulator.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -33,6 +35,10 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   // Messages list
   final ValueNotifier<List<Message>> messagesNotifier = ValueNotifier([]);
   List<Attachment> get attachments => attachmentCtrl.value.attachments;
+
+  // Track upload subscriptions by message id
+  final Map<String, List<StreamSubscription<UploadState>>> _uploadSubs = {};
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +83,13 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
     messagesNotifier.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _debounceTimer?.cancel();
+    // Cancel any running upload simulations
+    for (final subs in _uploadSubs.values) {
+      for (final s in subs) {
+        s.cancel();
+      }
+    }
+    _uploadSubs.clear();
   }
 
   void _sendMessage({String? text, List<Attachment>? attachments}) {
@@ -95,6 +108,11 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
     final currentMessages = List<Message>.from(messagesNotifier.value);
     currentMessages.add(message);
     messagesNotifier.value = currentMessages;
+
+    // Start simulated uploads for this message
+    if (message.attachments.isNotEmpty) {
+      _simulateUploadsForMessage(message);
+    }
 
     // Clear text field
     _textController.clear();
@@ -115,6 +133,49 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
     if (message.attachments.isNotEmpty) {
       debugPrint('Số lượng attachments: ${message.attachments.length}');
     }
+  }
+
+  void _simulateUploadsForMessage(Message message) {
+    // Ensure list for this message
+    _uploadSubs[message.id] = _uploadSubs[message.id] ?? [];
+    for (final att in message.attachments) {
+      _startUploadForAttachment(message, att);
+    }
+  }
+
+  void _startUploadForAttachment(Message message, Attachment attachment) {
+    final stream = UploadSimulator.instance.uploadAttachment(attachment);
+    final sub = stream.listen((state) {
+      _updateAttachmentState(message.id, attachment.id, state);
+    });
+    _uploadSubs[message.id]!.add(sub);
+  }
+
+  void _updateAttachmentState(
+    String messageId,
+    String attachmentId,
+    UploadState state,
+  ) {
+    final list = List<Message>.from(messagesNotifier.value);
+    final mIndex = list.indexWhere((m) => m.id == messageId);
+    if (mIndex < 0) return;
+    final m = list[mIndex];
+
+    final newAttachments = m.attachments.map((a) {
+      if (a.id == attachmentId) {
+        return a.copyWith(uploadState: state);
+      }
+      return a;
+    }).toList();
+
+    list[mIndex] = m.copyWith(attachments: newAttachments);
+    messagesNotifier.value = list;
+  }
+
+  void _retryUpload(Message message, Attachment attachment) {
+    // Reset to preparing immediately for UI feedback
+    _updateAttachmentState(message.id, attachment.id, const UploadState.preparing());
+    _startUploadForAttachment(message, attachment);
   }
 
   @override
@@ -151,6 +212,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                         return MessageListView(
                           messages: messages,
                           scrollController: _scrollController,
+                          onRetry: (m, a) => _retryUpload(m, a),
                         );
                       },
                     ),
