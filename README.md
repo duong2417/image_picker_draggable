@@ -1,5 +1,5 @@
 Video demo mới nhất:
-https://drive.google.com/file/d/1TLkQiYb6Ts8wG6x_2PeSfxStuMG1iBs2/view?usp=drivesdk
+
 
 https://github.com/user-attachments/assets/1e4dff42-9991-4e24-a3f9-60f95cf378c9
 
