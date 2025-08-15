@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker_with_draggable/assets_path/image.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import 'media_thumbnail_provider.dart';
@@ -76,7 +77,7 @@ class PhotoGalleryTile extends StatelessWidget {
         AspectRatio(
           aspectRatio: 1,
           child: FadeInImage(
-            placeholder: const AssetImage('assets/placeholder.png'),
+            placeholder: const AssetImage(PngPath.interview),
             fadeInDuration: const Duration(milliseconds: 300),
             fit: BoxFit.cover,
             image: MediaThumbnailProvider(
