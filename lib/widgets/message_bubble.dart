@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker_with_draggable/chat_image_grid.dart';
+import 'package:image_picker_with_draggable/widgets/chat_image_grid.dart';
 import 'package:image_picker_with_draggable/models/attachment.dart';
 import 'package:image_picker_with_draggable/models/message.dart';
 import 'package:intl/intl.dart';

@@ -4,8 +4,8 @@ import 'package:image_picker_with_draggable/options/gallery_picker.dart';
 import 'package:image_picker_with_draggable/common/draggable_sheet.dart';
 import 'package:image_picker_with_draggable/utils/extensions.dart';
 
-import 'models/attachment.dart';
-import 'models/attachment_picker.dart';
+import '../models/attachment.dart';
+import '../models/attachment_picker.dart';
 
 class ImagePickerBottomsheet extends StatefulWidget {
   const ImagePickerBottomsheet({

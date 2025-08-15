@@ -4,7 +4,7 @@ import 'package:image_picker_with_draggable/thumbnail/photo_gallery_tile.dart';
 import 'package:image_picker_with_draggable/common/empty_widget.dart';
 import 'package:image_picker_with_draggable/common/loading_widget.dart';
 import 'package:image_picker_with_draggable/common/paged_value_scrollview.dart';
-import 'package:image_picker_with_draggable/const.dart';
+import 'package:image_picker_with_draggable/utils/const.dart';
 import 'package:image_picker_with_draggable/models/error_model.dart';
 import 'package:image_picker_with_draggable/utils/helper.dart';
 import 'package:photo_manager/photo_manager.dart';

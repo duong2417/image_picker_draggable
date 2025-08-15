@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker_with_draggable/const.dart';
+import 'package:image_picker_with_draggable/utils/const.dart';
 import 'package:image_picker_with_draggable/handler/attachment_handler.dart';
 import 'package:image_picker_with_draggable/models/attachment.dart';
 import 'package:image_picker_with_draggable/models/attachment_file.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/common/empty_widget.dart';
-import 'package:image_picker_with_draggable/const.dart';
+import 'package:image_picker_with_draggable/utils/const.dart';
 import 'package:image_picker_with_draggable/models/attachment.dart';
 import 'package:image_picker_with_draggable/models/message.dart';
 import 'dart:io';
