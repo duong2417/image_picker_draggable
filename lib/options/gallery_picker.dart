@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:image_picker_with_draggable/edit_image/image_tile.dart';
 import 'package:image_picker_with_draggable/thumbnail/photo_gallery_tile.dart';
 import 'package:image_picker_with_draggable/common/empty_widget.dart';
 import 'package:image_picker_with_draggable/common/loading_widget.dart';
@@ -134,7 +135,17 @@ class _GalleryPickerState extends State<GalleryPicker> {
                 controller: _controller,
                 itemBuilder: (context, mediaList, index) {
                   final media = mediaList[index];
-
+                  return ImageTile(
+                    // selected: widget.selectedMediaItems.contains(media.id),
+                    // assets: [],
+                    asset: media,
+                    selectedAssets: widget.selectedMediaItems,
+                    onPickImage: (assetEntity) {},
+                    onTap: (assetEntity) {},
+                    editedImagePath: null,
+                    index: 0,
+                    caption: 'cap null',
+                  );
                   return PhotoGalleryTile(
                     selected: widget.selectedMediaItems.contains(media.id),
                     media: media,

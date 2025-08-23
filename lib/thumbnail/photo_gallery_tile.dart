@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/assets_path/image.dart';
+import 'package:image_picker_with_draggable/edit_image/image_full_screen.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import 'media_thumbnail_provider.dart';
@@ -125,7 +126,29 @@ class PhotoGalleryTile extends StatelessWidget {
         Positioned.fill(
           child: Material(
             color: Colors.transparent,
-            child: InkWell(onTap: onTap, onLongPress: onLongPress),
+            child: InkWell(
+              onTap: () {
+                print('onTap PhotoGalleryTile');
+                if (onTap != null) {
+                  onTap!();
+                } else {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder:
+                          (context) => ImageFullScreen(
+                            onEditDone: (String path) {
+                              print('onEditDone: $path');
+                            },
+                            files: [],
+                            currentIndex: 0,
+                            selectedAssets: <AssetEntity>{},
+                          ),
+                    ),
+                  );
+                }
+              },
+              onLongPress: onLongPress,
+            ),
           ),
         ),
       ],
