@@ -5,7 +5,7 @@ import 'package:image_picker_with_draggable/common/buttons/back_button.dart';
 import 'package:image_picker_with_draggable/common/dialog/error_dialog.dart';
 import 'package:image_picker_with_draggable/edit_image/edit_image_screen.dart';
 import 'package:image_picker_with_draggable/handler/attachment_handler.dart';
-import 'package:image_picker_with_draggable/utils/helper.dart';
+import 'package:image_picker_with_draggable/utils/extensions.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 
@@ -17,12 +17,14 @@ class ImageFullScreen extends StatefulWidget {
     required this.currentIndex, //current page index
     required this.selectedAssets,
     this.isHD = true,
+    this.showAmount = true,
   });
   final Function(String) onEditDone;
   final List<AssetEntity> files;
   final int currentIndex;
   final List<String> selectedAssets;
   final bool isHD;
+  final bool showAmount;
   @override
   State<ImageFullScreen> createState() => _ImageFullScreenState();
 }
@@ -67,15 +69,15 @@ class _ImageFullScreenState extends State<ImageFullScreen> {
         backgroundColor: Colors.black.withOpacity(0.7),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        // title:
-        //     showAmount
-        //         ? (_files.isNotEmpty)
-        //             ? Text(
-        //               'Ảnh ${_currentIndex + 1}/${_files.length}',
-        //               style: const TextStyle(color: Colors.white),
-        //             )
-        //             : null
-        //         : null,
+        title:
+            widget.showAmount
+                ? (_files.isNotEmpty)
+                    ? Text(
+                      'Ảnh ${_currentIndex + 1}/${_files.length}',
+                      style: const TextStyle(color: Colors.white),
+                    )
+                    : null
+                : null,
         actions: buildActions(
           onEditDone: widget.onEditDone,
           onCropImage: () async {
@@ -89,7 +91,7 @@ class _ImageFullScreenState extends State<ImageFullScreen> {
             if (editedPaths.containsKey(_files[_currentIndex])) {
               path = editedPaths[_files[_currentIndex]]!;
             } else {
-              path = _files[_currentIndex].toFilePath();
+              path = await _files[_currentIndex].toPath();
               // path = await assetEntityToPath(_files[_currentIndex]);
             }
             // if (path == null) {
@@ -246,7 +248,7 @@ class _ImageFullScreenState extends State<ImageFullScreen> {
     if (editedPaths.containsKey(_files[_currentIndex].id)) {
       path = editedPaths[_files[_currentIndex].id]!;
     } else {
-      path = await assetEntityToPath(_files[_currentIndex]);
+      path = await (_files[_currentIndex].toPath());
     }
     if (path == null) {
       showError(context, 'Không tìm thấy ảnh');

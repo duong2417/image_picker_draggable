@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'package:photo_manager/photo_manager.dart';
 import 'package:synchronized/synchronized.dart';
 
 void showKeyboard() {
@@ -35,8 +34,3 @@ Future<T> runInPermissionRequestLock<T>(
 }
 
 final _permissionRequestLock = Lock();
-
-Future<String?> assetEntityToPath(AssetEntity asset) async {
-  final file = await asset.file;
-  return file?.path;
-}
