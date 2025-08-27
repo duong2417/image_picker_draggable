@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:image_picker_with_draggable/edit_image/image_full_screen.dart';
 import 'package:image_picker_with_draggable/edit_image/image_tile.dart';
 import 'package:image_picker_with_draggable/thumbnail/photo_gallery_tile.dart';
 import 'package:image_picker_with_draggable/common/empty_widget.dart';
@@ -137,11 +138,35 @@ class _GalleryPickerState extends State<GalleryPicker> {
                   final media = mediaList[index];
                   return ImageTile(
                     // selected: widget.selectedMediaItems.contains(media.id),
-                    // assets: [],
                     asset: media,
                     selectedAssets: widget.selectedMediaItems,
-                    onPickImage: (assetEntity) {},
-                    onTap: (assetEntity) {},
+                    onPickImage: (assetEntity) {
+                      //tap ô chọn
+                      print(
+                        'onPickImage trong gallery_picker: ${assetEntity.id}',
+                      );
+                      widget.onTap(assetEntity);
+                    },
+                    onTap: (assetEntity) {
+                      //tap image xem full
+                      print('onTap trong gallery_picker: ${assetEntity.id}');
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder:
+                              (context) => ImageFullScreen(
+                                isHD: true,
+                                onEditDone: (String path) {
+                                  print('onEditDone: $path');
+                                },
+                                files: mediaList,
+                                currentIndex: 0,
+                                selectedAssets:
+                                    widget.selectedMediaItems.toList(),
+                              ),
+                        ),
+                      );
+                      // widget.onTap(assetEntity);
+                    },
                     editedImagePath: null,
                     index: 0,
                     caption: 'cap null',

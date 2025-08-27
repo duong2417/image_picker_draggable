@@ -158,13 +158,6 @@ class _DrawingRoomScreenState extends State<DrawingRoomScreen> {
                   //rm FadeTransition
                   backgroundColor: Colors.black.withOpacity(0.5),
                   elevation: 0,
-                  title: const Text(
-                    'Chỉnh ảnh',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
                   actions: [
                     // Nút Hoàn thành
                     Padding(
@@ -179,8 +172,17 @@ class _DrawingRoomScreenState extends State<DrawingRoomScreen> {
                           );
                           widget.onEditDone(path);
                         },
-                        icon: const Icon(Icons.check_circle_outline),
-                        label: Text(widget.textSubmit),
+                        icon: const Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          widget.textSubmit,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ],

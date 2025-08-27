@@ -13,6 +13,7 @@ import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_manager/photo_manager.dart';
 
+///author: GetStream
 extension StringX on String {
   /// returns the media type from the passed file name.
   MediaType? get mediaType {
@@ -22,9 +23,24 @@ extension StringX on String {
   }
 }
 
+///author: GetStream
+extension AssetEntityX on AssetEntity {
+  /// Helper method to get the origin file with null safety
+  Future<File?> getOriginFile() async {
+    return await originFile;
+  }
+
+  /// Helper method to get cached file path in temp directory
+  Future<String> getCachedFilePath(File originalFile) async {
+    final tempDir = await getTemporaryDirectory();
+    return '${tempDir.path}/${originalFile.path.split('/').last}';
+  }
+}
+
+///author: GetStream
 extension ImagePickerX on AttachmentPickerController {
   Future<void> addAssetAttachment(AssetEntity asset) async {
-    final mediaFile = await asset.originFile;
+    final mediaFile = await asset.getOriginFile();
 
     if (mediaFile == null) return;
 
@@ -43,9 +59,8 @@ extension ImagePickerX on AttachmentPickerController {
           quality: 70,
         );
 
-        final tempDir = await getTemporaryDirectory();
         cachedFile = await File(
-          '${tempDir.path}/${mediaFile.path.split('/').last}',
+          await asset.getCachedFilePath(mediaFile),
         ).create().then((it) => it.writeAsBytes(resizedImage!));
       }
     }
@@ -78,11 +93,10 @@ extension ImagePickerX on AttachmentPickerController {
 
   Future<void> removeAssetAttachment(AssetEntity asset) async {
     if (asset.type == AssetType.image) {
-      final image = await asset.originFile;
+      final image = await asset.getOriginFile();
       if (image != null) {
-        final tempDir = await getTemporaryDirectory();
         final cachedFile = File(
-          '${tempDir.path}/${image.path.split('/').last}',
+          await asset.getCachedFilePath(image),
         );
         if (cachedFile.existsSync()) {
           cachedFile.deleteSync();
@@ -108,6 +122,7 @@ extension AssetTypeX on AssetType {
   }
 }
 
+///author: GetStream
 /// {@template attachmentType}
 /// A type of attachment that determines how the attachment is displayed and
 /// handled by the system.
@@ -176,5 +191,16 @@ extension OriginalSizeX on Attachment {
     final height = originalHeight;
     if (width == null || height == null) return null;
     return Size(width.toDouble(), height.toDouble());
+  }
+}
+
+extension DurationX on Duration {
+  String format() {
+    final s = '$this'.split('.')[0].padLeft(8, '0');
+    if (s.startsWith('00:')) {
+      return s.replaceFirst('00:', '');
+    }
+
+    return s;
   }
 }

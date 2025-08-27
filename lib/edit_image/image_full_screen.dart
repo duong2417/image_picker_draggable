@@ -16,28 +16,31 @@ class ImageFullScreen extends StatefulWidget {
     required this.files,
     required this.currentIndex, //current page index
     required this.selectedAssets,
+    this.isHD = true,
   });
   final Function(String) onEditDone;
   final List<AssetEntity> files;
   final int currentIndex;
-  final Set<AssetEntity> selectedAssets;
+  final List<String> selectedAssets;
+  final bool isHD;
   @override
   State<ImageFullScreen> createState() => _ImageFullScreenState();
 }
 
 class _ImageFullScreenState extends State<ImageFullScreen> {
   bool showAppBar = true;
-  bool isHD = false;
+  late bool isHD;
   late final PageController pageController;
   Map<String, String> editedPaths = {};
   bool _selectedImage = false;
-  late Set<AssetEntity> _selectedAssets;
+  late List<String> _selectedAssets;
   late List<AssetEntity> _files;
   late int _currentIndex;
   final handler = AttachmentHandler.instance;
   @override
   void initState() {
     super.initState();
+    isHD = widget.isHD;
     _files = widget.files;
     _currentIndex = widget.currentIndex;
     _selectedAssets = widget.selectedAssets;
@@ -52,67 +55,61 @@ class _ImageFullScreenState extends State<ImageFullScreen> {
       extendBodyBehindAppBar:
           true, //cp ko thì khi show appbar, ảnh bị đẩy xuống (do appbar chiếm chỗ)
       backgroundColor: Colors.black,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(80),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          height: showAppBar ? 80 : 0,
-          child: AppBar(
-            centerTitle: false,
-            leading: MyBackButton(
-              color: Colors.white,
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            // toolbarHeight: 80.h,
-            backgroundColor: Colors.black.withOpacity(0.7),
-            elevation: 0,
-            iconTheme: const IconThemeData(color: Colors.white),
-            // title:
-            //     showAmount
-            //         ? (_files.isNotEmpty)
-            //             ? Text(
-            //               'Ảnh ${_currentIndex + 1}/${_files.length}',
-            //               style: const TextStyle(color: Colors.white),
-            //             )
-            //             : null
-            //         : null,
-            actions: buildActions(
-              onEditDone: widget.onEditDone,
-              onCropImage: () async {
-                final path = await onCropImage();
-                if (path != null) {
-                  widget.onEditDone(path); //update imgPickerBottomsheet
-                }
-              },
-              onTapEditImage: () async {
-                String? path;
-                if (editedPaths.containsKey(_files[_currentIndex].id)) {
-                  path = editedPaths[_files[_currentIndex].id]!;
-                } else {
-                  path = await assetEntityToPath(_files[_currentIndex]);
-                }
-                if (path == null) {
-                  showError(context, 'Không tìm thấy ảnh');
-                  return;
-                }
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => DrawingRoomScreen(
-                          filePath: path!,
-                          isHD: isHD,
-                          onEditDone: (editedImagePath) async {
-                            widget.onEditDone(editedImagePath);
-                          },
-                        ),
-                  ),
-                );
-              },
-            ),
-          ),
+      appBar: AppBar(
+        centerTitle: false,
+        leading: MyBackButton(
+          color: Colors.white,
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        // toolbarHeight: 80.h,
+        backgroundColor: Colors.black.withOpacity(0.7),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        // title:
+        //     showAmount
+        //         ? (_files.isNotEmpty)
+        //             ? Text(
+        //               'Ảnh ${_currentIndex + 1}/${_files.length}',
+        //               style: const TextStyle(color: Colors.white),
+        //             )
+        //             : null
+        //         : null,
+        actions: buildActions(
+          onEditDone: widget.onEditDone,
+          onCropImage: () async {
+            final path = await onCropImage();
+            if (path != null) {
+              widget.onEditDone(path); //update imgPickerBottomsheet
+            }
+          },
+          onTapEditImage: () async {
+            String? path;
+            if (editedPaths.containsKey(_files[_currentIndex])) {
+              path = editedPaths[_files[_currentIndex]]!;
+            } else {
+              path = _files[_currentIndex].toFilePath();
+              // path = await assetEntityToPath(_files[_currentIndex]);
+            }
+            // if (path == null) {
+            //   showError(context, 'Không tìm thấy ảnh');
+            //   return;
+            // }
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => DrawingRoomScreen(
+                      filePath: path!,
+                      isHD: isHD,
+                      onEditDone: (editedImagePath) async {
+                        widget.onEditDone(editedImagePath);
+                      },
+                    ),
+              ),
+            );
+          },
         ),
       ),
       body: GestureDetector(
@@ -129,17 +126,17 @@ class _ImageFullScreenState extends State<ImageFullScreen> {
               itemBuilder: (context, index) {
                 final file = _files[index];
                 // Kiểm tra xem có đường dẫn đã chỉnh sửa cho index này không
-                if (editedPaths.containsKey(file.id)) {
+                if (editedPaths.containsKey(file)) {
                   return InteractiveViewer(
                     minScale: 0.5,
                     maxScale: 3.0,
                     child: Center(
                       child: Hero(
-                        tag: 'asset_${file.id}',
+                        tag: 'asset_${file}',
                         child: Image.file(
                           filterQuality:
                               isHD ? FilterQuality.high : FilterQuality.low,
-                          File(editedPaths[file.id]!),
+                          File(editedPaths[file]!),
                           fit: BoxFit.contain,
                           width: MediaQuery.sizeOf(context).width,
                           height: MediaQuery.sizeOf(context).height,
@@ -149,7 +146,7 @@ class _ImageFullScreenState extends State<ImageFullScreen> {
                   );
                 } else {
                   return Hero(
-                    tag: 'asset_${file.id}',
+                    tag: 'asset_${file}',
                     child: AssetEntityImage(
                       file,
                       // key: Key(file.id),

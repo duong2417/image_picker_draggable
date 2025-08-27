@@ -41,7 +41,7 @@ class _ImageTileState extends State<ImageTile> {
 
   @override
   Widget build(BuildContext context) {
-    final asset = widget.asset;//assets[widget.index];
+    final asset = widget.asset; //assets[widget.index];
     final isSelected = widget.selectedAssets.contains(asset.id);
     return Stack(
       children: [
