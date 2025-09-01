@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker_with_draggable/print.dart';
 
 class DraggableSheet extends StatefulWidget {
   const DraggableSheet({
@@ -47,14 +48,20 @@ class _DraggableSheetState extends State<DraggableSheet> {
                   // Nếu đang ở minHeight và người dùng vuốt xuống
                   if ((height == minHeight || height! <= minHeight + 1) &&
                       details.delta.dy > 0) {
-                    debugPrint('👋 Vuốt xuống khi đang ở minHeight');
+                    luon(
+                      '👋 Vuốt xuống khi đang ở minHeight',
+                      print: true,
+                    ); //ko dô đây
                     widget.hideBottomSheet();
                   }
                   final newHeight = (height! - details.delta.dy).clamp(
                     minHeight,
                     maxHeight,
                   );
-
+                  luon(
+                    'onPanUpdate:newHeight: $newHeight, minHeight: $minHeight, maxHeight: $maxHeight, details.delta.dy: ${details.delta.dy}',
+                    print: true,
+                  );
                   setState(() {
                     height = newHeight;
                   });
@@ -74,9 +81,14 @@ class _DraggableSheetState extends State<DraggableSheet> {
                       velocity > 200 ||
                       currentHeight <=
                           (minHeight + (maxHeight - minHeight) * 0.2);
+                  luon(
+                    'pnPanEnd:shouldExpand: $shouldExpand, shouldCollapse: $shouldCollapse, velocity: $velocity, currentHeight: $currentHeight, minHeight: $minHeight, maxHeight: $maxHeight',
+                    print: true,
+                  );
 
                   setState(() {
-                    height = shouldExpand ? maxHeight : minHeight;
+                    height = shouldExpand ? maxHeight : 700;
+                    // height = shouldExpand ? maxHeight : minHeight;
                   });
                 },
                 child: Container(

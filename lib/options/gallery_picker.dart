@@ -159,7 +159,7 @@ class _GalleryPickerState extends State<GalleryPicker> {
                                   print('onEditDone: $path');
                                 },
                                 files: mediaList,
-                                currentIndex: 0,
+                                currentIndex: index,
                                 selectedAssets:
                                     widget.selectedMediaItems.toList(),
                               ),
@@ -168,7 +168,7 @@ class _GalleryPickerState extends State<GalleryPicker> {
                       // widget.onTap(assetEntity);
                     },
                     editedImagePath: null,
-                    index: 0,
+                    index: index,
                     caption: 'cap null',
                   );
                   return PhotoGalleryTile(

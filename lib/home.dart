@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker_with_draggable/common/wrap_screen.dart';
 import 'package:image_picker_with_draggable/handler/attachment_picker_controller.dart';
 import 'package:image_picker_with_draggable/widgets/image_picker_bottom_sheet.dart';
 import 'package:image_picker_with_draggable/models/message.dart';
@@ -27,7 +28,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   final ValueNotifier<List<Uint8List>> thumbnailsNotifier = ValueNotifier([]);
   final ValueNotifier<List<File>> filesNotifier = ValueNotifier([]);
   // Additional variables needed for the new implementation
-  final FocusNode _focusNode = FocusNode();
+  // final FocusNode _focusNode = FocusNode();
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AttachmentPickerController attachmentCtrl;
@@ -76,7 +77,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
     showActionUtilTapOutside.dispose();
     thumbnailsNotifier.dispose();
     filesNotifier.dispose();
-    _focusNode.dispose();
+    // _focusNode.dispose();
     _textController.dispose();
     _scrollController.dispose();
     attachmentCtrl.dispose();
@@ -161,12 +162,13 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
     if (mIndex < 0) return;
     final m = list[mIndex];
 
-    final newAttachments = m.attachments.map((a) {
-      if (a.id == attachmentId) {
-        return a.copyWith(uploadState: state);
-      }
-      return a;
-    }).toList();
+    final newAttachments =
+        m.attachments.map((a) {
+          if (a.id == attachmentId) {
+            return a.copyWith(uploadState: state);
+          }
+          return a;
+        }).toList();
 
     list[mIndex] = m.copyWith(attachments: newAttachments);
     messagesNotifier.value = list;
@@ -174,7 +176,11 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
 
   void _retryUpload(Message message, Attachment attachment) {
     // Reset to preparing immediately for UI feedback
-    _updateAttachmentState(message.id, attachment.id, const UploadState.preparing());
+    _updateAttachmentState(
+      message.id,
+      attachment.id,
+      const UploadState.preparing(),
+    );
     _startUploadForAttachment(message, attachment);
   }
 
@@ -197,130 +203,134 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
-        body: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            Column(
-              children: [
-                // Message list
-                Expanded(
-                  child: Container(
-                    color: Colors.white,
-                    child: ValueListenableBuilder<List<Message>>(
-                      valueListenable: messagesNotifier,
-                      builder: (context, messages, child) {
-                        return MessageListView(
-                          messages: messages,
-                          scrollController: _scrollController,
-                          onRetry: (m, a) => _retryUpload(m, a),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                // Input area
-                Container(
-                  color: Colors.green,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _textController,
-                              focusNode: _focusNode,
-                              decoration: const InputDecoration(
-                                hintText: 'Nhập tin nhắn...',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                              ),
-                              onSubmitted: (text) {
-                                _sendMessage(text: text);
-                              },
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              final text = _textController.text.trim();
-                              if (text.isNotEmpty || attachments.isNotEmpty) {
-                                _sendMessage(
-                                  text: text.isEmpty ? null : text,
-                                  attachments: attachments,
-                                );
-                                // Đóng bottom sheet
-                                // showActionUtilTapOutside.value = false;
-                                // _focusNode.requestFocus();
-
-                                debugPrint(
-                                  'Đã gửi ${attachments.length} tệp đính kèm',
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.send),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              showActionUtilTapOutside.value = true;
-                              showActions = !showActions;
-                              if (showActions == true) {
-                                hideKeyboard();
-                              } else {
-                                showKeyboard();
-                              }
-                            },
-                            icon: const Icon(Icons.more_vert),
-                          ),
-                        ],
-                      ),
-                      ValueListenableBuilder(
-                        valueListenable: showActionUtilTapOutside,
-                        builder: (context, showActionUtilTapOutside, child) {
-                          if (!showActionUtilTapOutside) {
-                            return const SizedBox.shrink();
-                          }
-                          return Container(
-                            height:
-                                maxHeightKeyboard -
-                                heightKeyboard, //TODO ko an toàn: check số âm
-                            color: Colors.amber,
-                            child: const Center(
-                              child: Text('This is a bottom bar'),
-                            ),
+        body: ScreenWrap(
+          width: 100,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Column(
+                children: [
+                  // Message list
+                  Expanded(
+                    child: Container(
+                      color: Colors.white,
+                      child: ValueListenableBuilder<List<Message>>(
+                        valueListenable: messagesNotifier,
+                        builder: (context, messages, child) {
+                          return MessageListView(
+                            messages: messages,
+                            scrollController: _scrollController,
+                            onRetry: (m, a) => _retryUpload(m, a),
                           );
                         },
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-
-            ValueListenableBuilder(
-              valueListenable: showActionUtilTapOutside,
-              builder: (context, showActionUtilTapOutside1, child) {
-                if (!showActionUtilTapOutside1) {
-                  return const SizedBox.shrink();
-                }
-                return ImagePickerBottomsheet(
-                  key: ValueKey(heightKeyboard), //cp
-                  height:
-                      maxHeightKeyboard -
-                      heightKeyboard, //TODO ko an toàn: check số âm
-                  hideBottomSheet: () {
-                    showActionUtilTapOutside.value = false;
-                    _focusNode.requestFocus();
-                    debugPrint('Bẹp tiếp nè');
-                  },
-
-                  attachmentPickerController: attachmentCtrl,
-                );
-              },
-            ),
-          ],
+                  // Input area
+                  Container(
+                    color: Colors.green,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _textController,
+                                // focusNode: _focusNode,
+                                decoration: const InputDecoration(
+                                  hintText: 'Nhập tin nhắn...',
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                onSubmitted: (text) {
+                                  _sendMessage(text: text);
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                final text = _textController.text.trim();
+                                if (text.isNotEmpty || attachments.isNotEmpty) {
+                                  _sendMessage(
+                                    text: text.isEmpty ? null : text,
+                                    attachments: attachments,
+                                  );
+                                  // Đóng bottom sheet
+                                  // showActionUtilTapOutside.value = false;
+                                  // _focusNode.requestFocus();
+                
+                                  debugPrint(
+                                    'Đã gửi ${attachments.length} tệp đính kèm',
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.send),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                showActionUtilTapOutside.value = true;
+                                showActions = !showActions;
+                                if (showActions == true) {
+                                  hideKeyboard();
+                                } else {
+                                  showKeyboard();
+                                }
+                              },
+                              icon: const Icon(Icons.more_vert),
+                            ),
+                          ],
+                        ),
+                        ValueListenableBuilder(
+                          valueListenable: showActionUtilTapOutside,
+                          builder: (context, showActionUtilTapOutside, child) {
+                            if (!showActionUtilTapOutside) {
+                              return const SizedBox.shrink();
+                            }
+                            return Container(
+                              height:
+                                  maxHeightKeyboard -
+                                  heightKeyboard, //TODO ko an toàn: check số âm
+                              color: Colors.amber,
+                              child: const Center(
+                                child: Text('This is a bottom bar'),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+                
+              ValueListenableBuilder(
+                valueListenable: showActionUtilTapOutside,
+                builder: (context, showActionUtilTapOutside1, child) {
+                  if (!showActionUtilTapOutside1) {
+                    return const SizedBox.shrink();
+                  }
+                  return ImagePickerBottomsheet(
+                    key: ValueKey(heightKeyboard), //cp
+                    height:
+                        maxHeightKeyboard -
+                        heightKeyboard, //TODO ko an toàn: check số âm
+                    hideBottomSheet: () {
+                      showActionUtilTapOutside.value = false;
+                      showKeyboard();
+                      // _focusNode.requestFocus();
+                      debugPrint('Bẹp tiếp nè');
+                    },
+                
+                    attachmentPickerController: attachmentCtrl,
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
