@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/handler/attachment_picker_controller.dart';
 import 'package:image_picker_with_draggable/options/gallery_picker.dart';
 import 'package:image_picker_with_draggable/common/draggable_sheet.dart';
+import 'package:image_picker_with_draggable/print.dart';
 import 'package:image_picker_with_draggable/utils/extensions.dart';
 
 import '../models/attachment.dart';
@@ -30,10 +31,14 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
   bool _isClosing = false;
   late final ScrollController scrollController;
   late final AttachmentPickerController _controller;
+  late ScrollController _scrollCtrl;
+  bool onReachListTop = false;
   @override
   void initState() {
     super.initState();
     scrollController = ScrollController();
+    _scrollCtrl =
+        scrollController; //lúc đầu là scroll của draggable và của list là riêng
     _controller = widget.attachmentPickerController;
   }
 
@@ -64,8 +69,27 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
               alignment: Alignment.bottomCenter,
               children: [
                 GalleryPicker(
+                  onScrollDown: () {
+                    luon('onScrollDown', print: true);
+                    if (onReachListTop) {
+                      setState(() {
+                        onReachListTop = false;
+                      });
+                    }
+                  },
+                  onReachTop: () {
+                    if (!onReachListTop) {
+                      setState(() {
+                        onReachListTop = true;
+                      });
+                    }
+                    luon(
+                      'Đã ở đầu danh sách - từ GalleryPicker',
+                      print: true,
+                    ); //t
+                  },
                   // scrollController: p0,
-                  scrollController: scrollController,
+                  scrollController: onReachListTop ? p0 : scrollController,
                   selectedMediaItems: selectedIds,
                   onTap: (media) async {
                     debugPrint('Tapped on media: ${media.id}');
@@ -79,31 +103,31 @@ class _ImagePickerBottomsheetState extends State<ImagePickerBottomsheet> {
                       rethrow;
                     }
                   },
-                  onScrollDownAtTop: () {
-                    final currentHeight = height ?? minHeight;
+                  // onScrollDownAtTop: () {
+                  //   final currentHeight = height ?? minHeight;
 
-                    if (_isAnimatingHeight || _isClosing) return;
+                  //   if (_isAnimatingHeight || _isClosing) return;
 
-                    // Đang ở maxHeight thì chỉ thu nhỏ
-                    if ((currentHeight - maxHeight).abs() < 1) {
-                      _isAnimatingHeight = true;
-                      setState(() {
-                        height = minHeight;
-                      });
-                      // Reset flag sau 300ms
-                      Future.delayed(const Duration(milliseconds: 300), () {
-                        _isAnimatingHeight = false;
-                      });
-                    }
-                    // Đang ở minHeight thì mới đóng
-                    else if ((currentHeight - minHeight).abs() < 1) {
-                      _isClosing = true;
-                      Future.delayed(const Duration(milliseconds: 200), () {
-                        widget.hideBottomSheet();
-                        _isClosing = false;
-                      });
-                    }
-                  },
+                  //   // Đang ở maxHeight thì chỉ thu nhỏ
+                  //   if ((currentHeight - maxHeight).abs() < 1) {
+                  //     _isAnimatingHeight = true;
+                  //     setState(() {
+                  //       height = minHeight;
+                  //     });
+                  //     // Reset flag sau 300ms
+                  //     Future.delayed(const Duration(milliseconds: 300), () {
+                  //       _isAnimatingHeight = false;
+                  //     });
+                  //   }
+                  //   // Đang ở minHeight thì mới đóng
+                  //   else if ((currentHeight - minHeight).abs() < 1) {
+                  //     _isClosing = true;
+                  //     Future.delayed(const Duration(milliseconds: 200), () {
+                  //       widget.hideBottomSheet();
+                  //       _isClosing = false;
+                  //     });
+                  //   }
+                  // },
                 ),
                 if (attachment.isNotEmpty)
                   Container(

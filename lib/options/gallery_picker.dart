@@ -19,8 +19,10 @@ class GalleryPicker extends StatefulWidget {
     this.limit = 50,
     this.scrollController,
     this.onScrollDownAtTop,
+    this.onReachTop,
     required this.onTap,
     required this.selectedMediaItems,
+    this.onScrollDown,
   });
 
   /// Maximum number of media items that can be selected.
@@ -28,7 +30,12 @@ class GalleryPicker extends StatefulWidget {
 
   final ScrollController? scrollController;
 
+  /// Callback khi user cuộn xuống quá đầu danh sách (overscroll)
   final VoidCallback? onScrollDownAtTop;
+  final VoidCallback? onScrollDown;
+
+  /// Callback khi user cuộn tới đầu danh sách
+  final VoidCallback? onReachTop;
 
   final Function(AssetEntity media) onTap;
 
@@ -60,14 +67,51 @@ class _GalleryPickerState extends State<GalleryPicker> {
       _controller.dispose();
       _controller = PhotoGalleryController(limit: widget.limit);
     }
+    if (widget.scrollController != oldWidget.scrollController) {
+      // Thay đổi ScrollController
+      _scrollController.removeListener(_onScroll);
+      if (oldWidget.scrollController == null) {
+        // Nếu trước đó sử dụng ScrollController nội bộ, thì dispose nó
+        _scrollController.dispose();
+      }
+      _scrollController = widget.scrollController ?? ScrollController();
+      _scrollController.addListener(_onScroll);
+    }
+  }
+
+  /// Kiểm tra xem user có đang ở đầu danh sách không
+  bool _isAtTop() {
+    return _scrollController.hasClients && _scrollController.offset <= 0;
+  }
+
+  /// Kiểm tra xem user có đang cuộn lên về phía đầu danh sách không
+  bool _isScrollingUp() {
+    return _scrollController.hasClients &&
+        _scrollController.position.userScrollDirection ==
+            ScrollDirection.forward;
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels <= 0 &&
-        _scrollController.position.userScrollDirection ==
-            ScrollDirection.forward) {
+    // Kiểm tra khi user cuộn tới đầu danh sách
+    if (_isAtTop() && _isScrollingUp()) {
+      debugPrint('Đã cuộn tới đầu danh sách - từ ScrollController'); //t2
+      widget.onScrollDownAtTop?.call();
+      widget.onReachTop?.call();
+    }
+
+    // Kiểm tra khi user cuộn xuống quá đầu danh sách (overscroll)
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels < -50) {
+      debugPrint('Overscroll tại đầu danh sách');
       widget.onScrollDownAtTop?.call();
     }
+
+    // Kiểm tra khi đã ở đầu danh sách (pixels = 0)
+    if (_isAtTop()) {
+      debugPrint('Đã ở đầu danh sách'); //t3
+      widget.onReachTop?.call();
+    }
+
     // if (_scrollController.position.pixels >=
     //     _scrollController.position.maxScrollExtent - 500) {
     //   widget.onLoadMore();
@@ -76,7 +120,8 @@ class _GalleryPickerState extends State<GalleryPicker> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    // _controller.dispose();//FlutterError (A PhotoGalleryController was used after being disposed.
+    // Once you have called dispose() on a PhotoGalleryController, it can no longer be used.)
     _scrollController.removeListener(_onScroll);
     if (widget.scrollController == null) {
       _scrollController.dispose();
@@ -119,13 +164,33 @@ class _GalleryPickerState extends State<GalleryPicker> {
             }
             return NotificationListener<ScrollNotification>(
               onNotification: (notification) {
+                // Lắng nghe khi user cuộn xuống quá đầu danh sách (overscroll)
                 if (notification is OverscrollNotification &&
                     notification.overscroll <= 0 &&
-                    _scrollController.offset < 0) {
-                  debugPrint('bẹp bẹp bẹp');
+                    _scrollController.offset <= 0) {
+                  debugPrint(
+                    'Overscroll notification - đã cuộn tới đầu danh sách',
+                  ); //t4
                   widget.onScrollDownAtTop?.call();
                   return true;
                 }
+
+                // Lắng nghe khi scroll bắt đầu từ đầu danh sách
+                if (notification is ScrollStartNotification &&
+                    _scrollController.offset <= 0) {
+                  debugPrint('Scroll start tại đầu danh sách'); //t1
+                  // widget.onReachTop?.call();
+                  widget.onScrollDown?.call();
+                }
+
+                // Lắng nghe khi scroll kết thúc tại đầu danh sách
+                if (notification is ScrollEndNotification &&
+                    _scrollController.offset <= 0) {
+                  debugPrint('Scroll end tại đầu danh sách'); //t5
+                  widget.onReachTop?.call();
+                  return true;
+                }
+
                 return false;
               },
               child: PagedValueGridView<int, AssetEntity>(

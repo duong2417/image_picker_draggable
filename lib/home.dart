@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker_with_draggable/common/wrap_screen.dart';
 import 'package:image_picker_with_draggable/handler/attachment_picker_controller.dart';
+import 'package:image_picker_with_draggable/print.dart';
 import 'package:image_picker_with_draggable/widgets/image_picker_bottom_sheet.dart';
 import 'package:image_picker_with_draggable/models/message.dart';
 import 'package:image_picker_with_draggable/widgets/message_list_view.dart';
@@ -262,7 +263,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                                   // Đóng bottom sheet
                                   // showActionUtilTapOutside.value = false;
                                   // _focusNode.requestFocus();
-                
+
                                   debugPrint(
                                     'Đã gửi ${attachments.length} tệp đính kèm',
                                   );
@@ -306,7 +307,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                   ),
                 ],
               ),
-                
+
               ValueListenableBuilder(
                 valueListenable: showActionUtilTapOutside,
                 builder: (context, showActionUtilTapOutside1, child) {
@@ -319,12 +320,12 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                         maxHeightKeyboard -
                         heightKeyboard, //TODO ko an toàn: check số âm
                     hideBottomSheet: () {
-                      showActionUtilTapOutside.value = false;
-                      showKeyboard();
+                      // showActionUtilTapOutside.value = false;
+                      // showKeyboard();
                       // _focusNode.requestFocus();
-                      debugPrint('Bẹp tiếp nè');
+                      luon('Bẹp tiếp nè', print: true);
                     },
-                
+
                     attachmentPickerController: attachmentCtrl,
                   );
                 },
