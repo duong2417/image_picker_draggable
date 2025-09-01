@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:synchronized/synchronized.dart';
 
 void showKeyboard() {
@@ -34,3 +36,26 @@ Future<T> runInPermissionRequestLock<T>(
 }
 
 final _permissionRequestLock = Lock();
+
+/////author: GetStream
+void _handleItemPositionsChanged(ItemPositionsListener _itemPositionListener) {
+  final itemPositions = _itemPositionListener.itemPositions.value.toList();
+  if (itemPositions.isEmpty) return;
+
+  // Index of the last item in the list view is 2 as 1 is the progress
+  // indicator and 0 is the footer.
+  const lastItemIndex = 0;//2
+  final lastItemPosition = itemPositions.firstWhereOrNull(
+    (position) => position.index == lastItemIndex,
+  );
+
+  var isLastItemFullyVisible = false;
+  if (lastItemPosition != null) {
+    // We consider the last item fully visible if its leading edge (reversed)
+    // is greater than or equal to 0.
+    isLastItemFullyVisible = lastItemPosition.itemLeadingEdge >= 0;
+  }
+
+  // if (mounted) _showScrollToBottom.value = !isLastItemFullyVisible;
+  // if (isLastItemFullyVisible) return _handleLastItemFullyVisible();
+}
