@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_picker_with_draggable/edit_image/image_full_screen.dart';
 import 'package:image_picker_with_draggable/edit_image/image_tile.dart';
+import 'package:image_picker_with_draggable/print.dart';
 import 'package:image_picker_with_draggable/thumbnail/photo_gallery_tile.dart';
 import 'package:image_picker_with_draggable/common/empty_widget.dart';
 import 'package:image_picker_with_draggable/common/loading_widget.dart';
@@ -76,6 +77,8 @@ class _GalleryPickerState extends State<GalleryPicker> {
       }
       _scrollController = widget.scrollController ?? ScrollController();
       _scrollController.addListener(_onScroll);
+    } else {
+      luon('ScrollController không thay đổi', print: true);
     }
   }
 
@@ -86,31 +89,59 @@ class _GalleryPickerState extends State<GalleryPicker> {
 
   /// Kiểm tra xem user có đang cuộn lên về phía đầu danh sách không
   bool _isScrollingUp() {
+    //true: khi cuộn xuống. false: khi cuộn lên (^)
     return _scrollController.hasClients &&
         _scrollController.position.userScrollDirection ==
-            ScrollDirection.forward;
+            ScrollDirection
+                .forward; //hasClients tránh lỗi ScrollController not attached to any scroll views
   }
+
+  bool? reachAtTopList;
 
   void _onScroll() {
     // Kiểm tra khi user cuộn tới đầu danh sách
-    if (_isAtTop() && _isScrollingUp()) {
-      debugPrint('Đã cuộn tới đầu danh sách - từ ScrollController'); //t2
+    final scrollPosition = _scrollController.position.pixels;
+    final bool cuonLen = !_isScrollingUp();
+    p('scrollPosition: $scrollPosition, cuonLen: $cuonLen');
+    if (_isAtTop() && !cuonLen) {
+      reachAtTopList = true;
+      p(
+        'Đã cuộn tới đầu danh sách - từ ScrollController: $scrollPosition',
+      ); //t2//0//gọi 1 lần khi at reach top
       widget.onScrollDownAtTop?.call();
       widget.onReachTop?.call();
+    } else {
+      reachAtTopList = null;
+      luon(
+        'reach top list rồi cuộn lên (^): cuonLen: $cuonLen, pos: $scrollPosition',
+        print: true,
+      ); //ko dô đây
+      widget.onScrollDown?.call();
     }
-
     // Kiểm tra khi user cuộn xuống quá đầu danh sách (overscroll)
-    if (_scrollController.hasClients &&
-        _scrollController.position.pixels < -50) {
-      debugPrint('Overscroll tại đầu danh sách');
-      widget.onScrollDownAtTop?.call();
+    if (_scrollController.hasClients) {
+      if (scrollPosition < -50) {
+        debugPrint('Overscroll tại đầu danh sách');
+        widget.onScrollDownAtTop?.call();
+      }
     }
 
     // Kiểm tra khi đã ở đầu danh sách (pixels = 0)
     if (_isAtTop()) {
-      debugPrint('Đã ở đầu danh sách'); //t3
-      widget.onReachTop?.call();
+      luon(
+        'Đã và đang ở đầu danh sách: $scrollPosition',
+        print: true,
+      ); //t3//0//gọi nhiều lần khi at reach top và vẫn đang cuộn
+      // widget.onReachTop?.call();
     }
+    // if (reachAtTopList == true && cuonLen) {
+    //   reachAtTopList = null;
+    //   luon(
+    //     'reach top list rồi cuộn lên (^): isScrollingUp: $cuonLen, pos: $scrollPosition',
+    //     print: true,
+    //   ); //ko dô đây
+    //   widget.onScrollDown?.call();
+    // }
 
     // if (_scrollController.position.pixels >=
     //     _scrollController.position.maxScrollExtent - 500) {
@@ -164,23 +195,36 @@ class _GalleryPickerState extends State<GalleryPicker> {
             }
             return NotificationListener<ScrollNotification>(
               onNotification: (notification) {
+                // final pos = notification.metrics.pixels;
+                // final pos2 = _scrollController.position.pixels;
+                // p('NotificationListener: pos: $pos,pos2: $pos2');
+                // bool cuonLen =
+                //     ;
+                // bool cuonLen =
+                //     _scrollController.position.userScrollDirection ==
+                //     ScrollDirection.forward;
+                // bool cuonLen =
+                //     notification.metrics.pixels >
+                //     notification.metrics.minScrollExtent;
+                // p('NotificationListener: cuonLen: $cuonLen');
                 // Lắng nghe khi user cuộn xuống quá đầu danh sách (overscroll)
-                if (notification is OverscrollNotification &&
-                    notification.overscroll <= 0 &&
-                    _scrollController.offset <= 0) {
-                  debugPrint(
-                    'Overscroll notification - đã cuộn tới đầu danh sách',
-                  ); //t4
-                  widget.onScrollDownAtTop?.call();
-                  return true;
-                }
+
+                // if (notification is OverscrollNotification &&
+                //     notification.overscroll <= 0 &&
+                //     _scrollController.offset <= 0) {
+                //   debugPrint(
+                //     'Overscroll notification - đã cuộn tới đầu danh sách',
+                //   ); //t4
+                //   widget.onScrollDownAtTop?.call();
+                //   return true;
+                // }
 
                 // Lắng nghe khi scroll bắt đầu từ đầu danh sách
                 if (notification is ScrollStartNotification &&
-                    _scrollController.offset <= 0) {
+                    _scrollController.offset <= 0) {//ScrollController not attached to any scroll views.
                   debugPrint('Scroll start tại đầu danh sách'); //t1
                   // widget.onReachTop?.call();
-                  widget.onScrollDown?.call();
+                  // widget.onScrollDown?.call();
                 }
 
                 // Lắng nghe khi scroll kết thúc tại đầu danh sách
